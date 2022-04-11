@@ -1,0 +1,24 @@
+{
+  "name": "nomads",
+  "version": "0.0.3",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https:/github.com/vjrasane/nomads.git"
+  },
+  "scripts": {
+    "lint": "eslint . --fix",
+    "prepack": "npm run build && npm run docs",
+    "docs": "./scripts/generate-docs.sh",
+    "build": "tsc"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.11.0",
+    "jsdoc-to-markdown": "^7.1.1",
+    "ts-node": "^10.7.0",
+    "tsc": "^2.0.4",
+    "typescript": "^4.6.2"
+  }
+}
