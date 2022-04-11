@@ -1,12 +1,9 @@
 {
   "name": "nomads",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "https:/github.com/vjrasane/nomads.git"
-  },
+  "repository": "https://github.com/vjrasane/nomads.git",
   "scripts": {
     "lint": "eslint . --fix",
     "prepack": "npm run build && npm run docs",
