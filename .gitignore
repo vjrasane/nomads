@@ -1,0 +1,7 @@
+node_modules
+.tmp-ts-output
+.vscode
+dist
+package
+.DS_Store
+*.log
