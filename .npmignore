@@ -3,3 +3,6 @@
 !dist/**/*
 !docs/**/*
 !README.md
+
+*.test.ts
+*.test.js

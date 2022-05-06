@@ -1,0 +1,1 @@
+export { Maybe as default } from './index';

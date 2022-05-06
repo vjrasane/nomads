@@ -6,3 +6,6 @@ package
 coverage
 .DS_Store
 *.log
+*.js
+*.d.ts
+*.d.ts.map

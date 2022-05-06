@@ -2411,6 +2411,15 @@ node-releases@^2.0.3:
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.4.tgz#f38252370c43854dc48aa431c766c6c398f40476"
   integrity sha512-gbMzqQtTtDz/00jQzZ21PQzdI9PyLYqUSvD0p3naOhX4odFji0ZxYdnVwPTxmSwkmxhcFImpozceidSG+AgoPQ==
 
+nomads@./nomads-v0.0.4.tgz:
+  version "0.0.4"
+  resolved "./nomads-v0.0.4.tgz#f1709176f48e9baaf4f39e6950b1e16e046df661"
+  dependencies:
+    "@types/jest" "^27.5.0"
+    "@types/node" "^17.0.31"
+    jest "^28.0.3"
+    ts-jest "^28.0.1"
+
 normalize-path@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/normalize-path/-/normalize-path-3.0.0.tgz#0dcd69ff23a1c9b11fd0978316644a0388216a65"
