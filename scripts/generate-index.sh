@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
+DOCS_DIR="${1}"
 
-DOCS_DIR=${1}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd);
 
+INDEX_TEMPLATE="${SCRIPT_DIR}/index.template"
 INDEX_FILE="${DOCS_DIR}/index.md"
+
 rm -f "${INDEX_FILE}"
 
 LINKS=""
@@ -15,7 +18,6 @@ for DOC in ${DOCS}; do
 	LINKS="${LINKS}
 ${LINK}";
 done
-cat << EOF > "${INDEX_FILE}"
-# index
-${LINKS}
-EOF
+
+export INDEX_LINKS=${LINKS}
+cat "${INDEX_TEMPLATE}" | envsubst > "${INDEX_FILE}"

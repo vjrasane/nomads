@@ -1,20 +1,21 @@
 
-## Members
+## Classes
 
 <dl>
-<dt><a href="#nothing">`nothing`</a></dt>
-<dd><p>Maybe value representing no present value</p>
-</dd>
+<dt><a href="#Nothing">Nothing</a></dt>
+<dd></dd>
+<dt><a href="#Just">Just</a></dt>
+<dd></dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#just">`just(value)`</a> ⇒ <code>Maybe.&lt;T&gt;</code></dt>
-<dd><p>Wraps given value to a Maybe value</p>
-</dd>
 <dt><a href="#isJust">`isJust(value)`</a> ⇒ <code>boolean</code></dt>
 <dd><p>Check if given maybe value is Just</p>
+</dd>
+<dt><a href="#just">`just(value)`</a> ⇒ <code>Maybe.&lt;T&gt;</code></dt>
+<dd><p>Wrap given value to a Maybe value</p>
 </dd>
 <dt><a href="#isNothing">`isNothing(value)`</a> ⇒ <code>boolean</code></dt>
 <dd><p>Check if given maybe value is Nothing</p>
@@ -24,26 +25,52 @@
 </dd>
 </dl>
 
-<a name="nothing"></a>
+<a name="Nothing"></a>
 
-## `nothing`
-Maybe value representing no present value
+## Nothing
+**Kind**: global class  
 
-**Kind**: global variable  
+* [Nothing](#Nothing)
+    * [`new Nothing()`](#new_Nothing_new)
+    * [`.map(fab)`](#Nothing.map) ⇒ <code>Maybe.&lt;B&gt;</code>
+
 
 * * *
 
-<a name="just"></a>
+<a name="new_Nothing_new"></a>
 
-## `just(value)` ⇒ <code>Maybe.&lt;T&gt;</code>
-Wraps given value to a Maybe value
+### `new Nothing()`
+Maybe value representing no present value
 
-**Kind**: global function  
-**Returns**: <code>Maybe.&lt;T&gt;</code> - maybe value of T  
+
+* * *
+
+<a name="Nothing.map"></a>
+
+### `Nothing.map(fab)` ⇒ <code>Maybe.&lt;B&gt;</code>
+Transform maybe value with a given function
+
+**Kind**: static method of [<code>Nothing</code>](#Nothing)  
+**Returns**: <code>Maybe.&lt;B&gt;</code> - maybe value of B  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| value | <code>T</code> | value to be wrapped |
+| fab | <code>function</code> | mapper function from T to A |
+
+
+* * *
+
+<a name="Just"></a>
+
+## Just
+**Kind**: global class  
+
+* * *
+
+<a name="new_Just_new"></a>
+
+### `new Just()`
+Maybe value representing a present value
 
 
 * * *
@@ -59,6 +86,21 @@ Check if given maybe value is Just
 | Param | Type | Description |
 | --- | --- | --- |
 | value | <code>Maybe.&lt;T&gt;</code> | value to be checked |
+
+
+* * *
+
+<a name="just"></a>
+
+## `just(value)` ⇒ <code>Maybe.&lt;T&gt;</code>
+Wrap given value to a Maybe value
+
+**Kind**: global function  
+**Returns**: <code>Maybe.&lt;T&gt;</code> - maybe value of T  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| value | <code>T</code> | value to be wrapped |
 
 
 * * *
