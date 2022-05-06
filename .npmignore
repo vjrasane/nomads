@@ -1,8 +1,10 @@
 *
 
-!dist/**/*
-!docs/**/*
 !README.md
 
-*.test.ts
-*.test.js
+!src/**/*.ts
+!*.ts
+
+jest.config.ts
+test
+

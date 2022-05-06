@@ -1,5 +1,5 @@
-import { Just, Maybe, Nothing } from '../maybe/maybe';
-import { Err, Ok, Result } from '../result/result';
+import { Just, Maybe, Nothing } from './maybe';
+import { Err, Ok, Result } from './result';
 
 interface IEither<A, B> {
   readonly mapRight: <C>(fab: (a: B) => C) => Either<A, C>

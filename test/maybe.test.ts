@@ -1,4 +1,4 @@
-import { applyTo, fromNullable, fromNumber, fromOptional, join, Just, Nothing } from './maybe';
+import { applyTo, fromNullable, fromNumber, fromOptional, join, Just, Nothing } from '../src/monads/maybe';
 
 describe('Maybe', () => {
   it('Nothing', () => {

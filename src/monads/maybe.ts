@@ -1,4 +1,4 @@
-import { Err, Ok, Result } from '../result/result';
+import { Err, Ok, Result } from './result';
 
 interface IMaybe<A> {
   readonly map: <B>(fab: (a: A) => B) => Maybe<B>,

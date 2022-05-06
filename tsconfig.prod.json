@@ -6,7 +6,6 @@
   "exclude": [
     "*.test.ts",
     "jest.config.ts",
-    "node_modules",
-    "dist",
+    "node_modules"
   ]
 }

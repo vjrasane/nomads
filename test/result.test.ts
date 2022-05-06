@@ -1,4 +1,4 @@
-import { applyTo, Err, fromNullable, fromNumber, fromOptional, join, Ok } from './result';
+import { applyTo, Err, fromNullable, fromNumber, fromOptional, join, Ok } from '../src/monads/result';
 
 describe('Result', () => {
   it('Ok', () => {

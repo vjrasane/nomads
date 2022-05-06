@@ -1,5 +1,5 @@
 
-import { array, values } from './traversal';
+import { array, values } from '../src/optics/traversal';
 
 describe('Traversal', () => {
   it ('array', () => {

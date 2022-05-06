@@ -1,4 +1,4 @@
-import { prop } from './lens';
+import { prop } from '../src/optics/lens';
 
 describe('Lens', () => {
   it('prop', () => {

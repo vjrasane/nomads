@@ -1,7 +1,7 @@
-import { Iso } from '../iso/iso';
-import { Lens } from '../lens/lens';
-import { Optional } from '../optional/optional';
-import { Prism } from '../prism/prism';
+import { Iso } from './iso';
+import { Lens } from './lens';
+import { Optional } from './optional';
+import { Prism } from './prism';
 
 export interface Traversal<A, B> {
 	readonly traverse: (fbb: (b: B) => B, a: A) => A,

@@ -1,11 +1,12 @@
 node_modules
-.tmp-ts-output
 .vscode
-dist
 package
 coverage
 .DS_Store
+package-lock.json
 *.log
 *.js
 *.d.ts
 *.d.ts.map
+*.tgz
+

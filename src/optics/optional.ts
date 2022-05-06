@@ -1,7 +1,7 @@
-import { fromOptional, Just, Maybe } from '../../monads/maybe/maybe';
-import { Result } from '../../monads/result/result';
-import { Lens } from '../lens/lens';
-import { Prism } from '../prism/prism';
+import { fromOptional, Just, Maybe } from '../monads/maybe';
+import { Result } from '../monads/result';
+import { Lens } from './lens';
+import { Prism } from './prism';
 
 export interface Optional<A, B> {
 	readonly getOption : (a: A) => Maybe<B>

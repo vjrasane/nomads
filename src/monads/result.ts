@@ -1,6 +1,6 @@
-import { Either, Left, Right } from '../either/either';
-import *  as M from '../maybe/maybe';
-import { Just, Maybe, Nothing } from '../maybe/maybe';
+import { Either, Left, Right } from './either';
+import *  as M from './maybe';
+import { Just, Maybe, Nothing } from './maybe';
 
 interface IResult<E, A> {
 	readonly map: <B>(fab: (a: A) => B) => Result<E, B>

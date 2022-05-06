@@ -1,1 +1,1 @@
-export { Maybe as default } from './index';
+export * from './src/monads/maybe';

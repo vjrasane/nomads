@@ -1,1 +1,1 @@
-export { Either as default } from './index';
+export * from './src/monads/either';

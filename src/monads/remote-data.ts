@@ -1,5 +1,5 @@
-import { Just, Maybe, Nothing } from '../maybe/maybe';
-import { Result } from '../result/result';
+import { Just, Maybe, Nothing } from './maybe';
+import { Result } from './result';
 
 interface IRemoteData<E, A> {
 	readonly map: <B>(fab: (a: A) => B) => RemoteData<E, B>,
@@ -30,7 +30,7 @@ export interface Failure<E> extends IRemoteData<E, any> {
 	readonly error: E
 }
 
-const StandBy: RemoteData<any, any> = ({
+export const StandBy: RemoteData<any, any> = ({
   tag: 'stand by',
   map: () => StandBy,
   chain: () => StandBy,
@@ -42,7 +42,7 @@ const StandBy: RemoteData<any, any> = ({
   toString: () => 'StandBy'
 });
 
-const Loading: RemoteData<any, any> = ({
+export const Loading: RemoteData<any, any> = ({
   tag: 'loading',
   map: () => Loading,
   chain: () => Loading,
@@ -54,7 +54,7 @@ const Loading: RemoteData<any, any> = ({
   toString: () => 'Loading'
 });
 
-const Success = <A>(data: A): RemoteData<any, A> => ({
+export const Success = <A>(data: A): RemoteData<any, A> => ({
   tag: 'success',
   data,
   map: (fab) => Success(fab(data)),
@@ -67,7 +67,7 @@ const Success = <A>(data: A): RemoteData<any, A> => ({
   toString: () => `Success(${data})`
 });
 
-const Failure = <E>(error: E): RemoteData<E, any> => ({
+export const Failure = <E>(error: E): RemoteData<E, any> => ({
   tag: 'failure',
   error,
   map: () => Failure(error),
