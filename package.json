@@ -1,6 +1,6 @@
 {
   "name": "nomads",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": "https://github.com/vjrasane/nomads.git",
@@ -35,6 +35,7 @@
     "src/**/*.d.ts",
     "src/**/*.d.ts.map",
     "src/**/*.js",
+    "docs/**/*.md",
     "README.md"
   ]
 }
