@@ -1,4 +1,4 @@
-import { applyTo, fromNullable, fromNumber, fromOptional, join, Just, Nothing } from '../src/monads/maybe';
+import { applyTo, first, fromNullable, fromNumber, fromOptional, join, Just, last, Nothing, nth } from '../src/monads/maybe';
 
 describe('Maybe', () => {
   it('Nothing', () => {
@@ -49,6 +49,24 @@ describe('Maybe', () => {
       expect(chained.tag).toBe('nothing');
       expect(chained.get()).toEqual(undefined);
     });
+  });
+
+  describe('or', () => {
+    it('just or just returns first value', () => {
+      expect(Just(42).or(Just(0)).get()).toBe(42);
+    });
+    
+    it("just or nothing returns first value", () => {
+      expect(Just(42).or(Nothing).get()).toBe(42);
+    })
+
+    it("nothing or just returns second value", () => {
+      expect(Nothing.or(Just(42)).get()).toBe(42);
+    })
+
+    it("othing or nothing returns nothing", () => {
+      expect(Nothing.or(Nothing).get()).toBe(undefined);
+    })
   });
 
   describe('default', () => {
@@ -239,7 +257,6 @@ describe('Maybe', () => {
       )).toBe(69);
     });
   });
-
   
   describe('getOrElse', () => {
     it('gets just value', () => {
@@ -269,4 +286,70 @@ describe('Maybe', () => {
       expect(res.getError().get()).toBe('no value');
     });
   });
+
+  describe("nth", () => {
+    it("gets just value from array", () => {
+      expect(nth(1, [1,2,3]).get()).toBe(2)
+    })
+    
+    it("gets nothing value from empty array", () => {
+      expect(nth(1, []).get()).toBe(undefined)
+    })
+
+    it("gets nothing value from undefined value", () => {
+      const maybe = nth(1, [undefined, undefined]);
+      expect(maybe.tag).toBe("nothing");
+      expect(maybe.get()).toBe(undefined)
+    })
+
+    it("gets just value from null value", () => {
+      const maybe = nth(1, [null, null]);
+      expect(maybe.tag).toBe("just");
+      expect(maybe.get()).toBe(null)
+    })
+  })
+
+  describe("first", () => {
+    it("gets first value from array", () => {
+      expect(first([1,2,3]).get()).toBe(1)
+    })
+    
+    it("gets nothing value from empty array", () => {
+      expect(first([]).get()).toBe(undefined)
+    })
+
+    it("gets nothing value from undefined value", () => {
+      const maybe = first([undefined, undefined]);
+      expect(maybe.tag).toBe("nothing");
+      expect(maybe.get()).toBe(undefined)
+    })
+
+    it("gets just value from null value", () => {
+      const maybe = first([null, null]);
+      expect(maybe.tag).toBe("just");
+      expect(maybe.get()).toBe(null)
+    })
+  })
+
+  describe("last", () => {
+    it("gets last value from array", () => {
+      expect(last([1,2,3]).get()).toBe(3)
+    })
+    
+    it("gets nothing value from empty array", () => {
+      expect(last([]).get()).toBe(undefined)
+    })
+
+    it("gets nothing value from undefined value", () => {
+      const maybe = last([undefined, undefined]);
+      expect(maybe.tag).toBe("nothing");
+      expect(maybe.get()).toBe(undefined)
+    })
+
+    it("gets just value from null value", () => {
+      const maybe = last([null, null]);
+      expect(maybe.tag).toBe("just");
+      expect(maybe.get()).toBe(null)
+    })
+  })
 });
