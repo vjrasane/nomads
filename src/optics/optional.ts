@@ -1,6 +1,6 @@
 import * as M from '../monads/maybe';
 import { fromOptional, Just, Maybe } from '../monads/maybe';
-import { Result } from '../monads/result';
+import { Result } from '../monads/result/result.wrapper';
 import { Lens } from './lens';
 import { Prism } from './prism';
 
