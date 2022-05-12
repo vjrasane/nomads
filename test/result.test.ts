@@ -1,4 +1,5 @@
-import { applyTo, Err, fromNullable, fromNumber, fromOptional, join, Ok } from '../src/monads/result';
+import { fromNullable, fromNumber, fromOptional } from '../src/monads/maybe';
+import { applyTo, Err, join, Ok } from '../src/monads/result';
 
 describe('Result', () => {
   it('Ok', () => {
@@ -39,6 +40,54 @@ describe('Result', () => {
       expect(chained.tag).toBe('err');
       expect(chained.get()).toEqual(undefined);
       expect(chained.getError().get()).toBe('error');
+    });
+  });
+
+  describe('or', () => {
+    it ('ok or ok returns ok', () => {
+      const or = Ok(42).or(Ok(0));
+      expect(or.tag).toBe('ok');
+      expect(or.get()).toBe(42);
+    });
+
+    it ('ok or err returns ok', () => {
+      const or = Ok(42).or(Err("error"));
+      expect(or.tag).toBe('ok');
+      expect(or.get()).toBe(42);
+    });
+
+    it ('err or ok returns ok', () => {
+      const or = Err("error").or(Ok(42));
+      expect(or.tag).toBe('ok');
+      expect(or.get()).toBe(42);
+    });
+
+    it ('err or err returns err', () => {
+      const or = Err("first").or(Err("second"));
+      expect(or.tag).toBe('err');
+      expect(or.get()).toBe(undefined);
+      expect(or.getError().get()).toBe("first");
+    });
+  });
+
+  describe('default', () => {
+    it ('ok defaults to itself', () => {
+      const def = Ok(42).default(0);
+      expect(def.tag).toBe('ok');
+      expect(def.get()).toBe(42);
+    });
+
+    it ('err defaults to default', () => {
+      const def = Err("error").default(0);
+      expect(def.tag).toBe('ok');
+      expect(def.get()).toBe(0);
+    });
+
+
+    it ('err defaults to first default', () => {
+      const def = Err("error").default(0).default(-1);
+      expect(def.tag).toBe('ok');
+      expect(def.get()).toBe(0);
     });
   });
 
@@ -206,20 +255,20 @@ describe('Result', () => {
 
   describe('fromOptional', () => {
     it('gets ok from value', () => {
-      const res = fromOptional(42, undefined);
+      const res = fromOptional(42).toResult("error");
       expect(res.tag).toEqual('ok');
       expect(res.get()).toEqual(42);
     });
 
     it('gets err from undefined', () => {
-      const res = fromOptional(undefined, 'error');
+      const res = fromOptional(undefined).toResult("error");
       expect(res.tag).toEqual('err');
       expect(res.get()).toEqual(undefined);
       expect(res.getError().get()).toEqual('error');
     });
 
     it('gets ok from null', () => {
-      const res = fromOptional(null, undefined);
+      const res = fromOptional(null).toResult("error");
       expect(res.tag).toEqual('ok');
       expect(res.get()).toEqual(null);
     });
@@ -227,20 +276,20 @@ describe('Result', () => {
 
   describe('fromNullable', () => {
     it('gets ok from value', () => {
-      const res = fromNullable(42, undefined);
+      const res = fromNullable(42).toResult("error");
       expect(res.tag).toEqual('ok');
       expect(res.get()).toEqual(42);
     });
 
     it('gets err from undefined', () => {
-      const res = fromNullable(undefined, 'error');
+      const res = fromNullable(undefined).toResult("error");
       expect(res.tag).toEqual('err');
       expect(res.get()).toEqual(undefined);
       expect(res.getError().get()).toEqual('error');
     });
 
     it('gets nothing from null', () => {
-      const res = fromNullable(null, 'error');
+      const res = fromNullable(null).toResult("error");
       expect(res.tag).toEqual('err');
       expect(res.get()).toEqual(undefined);
       expect(res.getError().get()).toEqual('error');
@@ -249,13 +298,13 @@ describe('Result', () => {
 
   describe('fromNumber', () => {
     it('gets just from number', () => {
-      const res = fromNumber(42, undefined);
+      const res = fromNumber(42).toResult("error");
       expect(res.tag).toEqual('ok');
       expect(res.get()).toEqual(42);
     });
 
     it('gets nothing from NaN', () => {
-      const res = fromNumber(NaN, 'error');
+      const res = fromNumber(NaN).toResult("error");
       expect(res.tag).toEqual('err');
       expect(res.get()).toEqual(undefined);
       expect(res.getError().get()).toEqual('error');

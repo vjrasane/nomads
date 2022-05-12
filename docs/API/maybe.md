@@ -11,9 +11,9 @@
     - [filter](#filter)
     - [or](#or)
     - [default](#default)
-    - [toResult](#toResult)
     - [get](#get)
     - [getOrElse](#getOrElse)
+    - [toResult](#toResult)
     - [toString](#toString)
 - [Utilities](#utilities)
 	- [applyTo](#applyTo)
@@ -35,7 +35,7 @@ type Maybe<A> = Just<A> | Nothing
 
 ### `Just: <A>(value: A) => Maybe<A>`
 
-Creates a present `Maybe<A>` value from given value of A 
+Creates a present maybe value from given value of A 
 
 <div id="Nothing"></div>
 
@@ -50,7 +50,7 @@ Absent `Maybe<any>` value
 <div id="map"></div>
 
 ### `map: <B>(fab: (a: A) => B) => Maybe<B>`
-Transform the Maybe value with a given function
+Transform the `Maybe` value with a given function
 
 **Returns**: `Maybe<B>` - maybe value of B  
 
@@ -69,13 +69,13 @@ Nothing.map(n => n * 2) // -> Nothing
 <div id="chain"></div>
 
 ### `chain: <B>(fab: (a: A) => Maybe<B>) => Maybe<B>`
-Transform the Maybe value with a given function and flatten.
+Transform the `Maybe` value with a given function and flatten.
 
 **Returns**: `Maybe<B>` - maybe value of B  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| fab | `(a: A) => Maybe<B>` | mapper function from A to Maybe<B> |
+| fab | `(a: A) => Maybe<B>` | mapper function from A to maybe of B |
 
 **Examples:**
 
@@ -206,11 +206,11 @@ Nothing.getOrElse(0) // -> 0
 ### `toResult: <E>(err: E) => Result<E, A>`
 Transforms the `Maybe` to a `Result` value, returning `Ok<A>` if it is a `Just<A>` or `Err<E>` with the given error value otherwise.
 
-**Returns**: `A` - value of A
+**Returns**: `Result<E, A>` - result value of A
 
 | Param | Type | Description |
 | --- | --- | --- |
-| def | `A` | default value |
+| err | `E` | error for absent value  |
 
 **Examples:**
 
@@ -266,8 +266,7 @@ Just(a => b => a + b)
 	.chain(applyTo(Just(3))) // -> Nothing
 
 Nothing
-	.chain(applyTo(Just(2)))
-	.chain(applyTo(Just(3))) // -> Nothing
+	.chain(applyTo(Just(2))) // -> Nothing
 ```
 
 <div id="fromOptional"></div>
@@ -417,8 +416,7 @@ join(Just(Nothing))) // -> Nothing
 
 join(Nothing) // -> Nothing
 
-Just(Just(42))
-	.chain(a => a) // -> Just(42)
+Just(Just(42)).chain(a => a) // -> Just(42)
 ```
 
 <!-- ### Result

@@ -1,3 +1,4 @@
+import * as M from '../monads/maybe';
 import { fromOptional, Just, Maybe } from '../monads/maybe';
 import { Result } from '../monads/result';
 import { Lens } from './lens';
@@ -29,11 +30,6 @@ export const maybe = <A>(): Optional<Maybe<A>, A> => Optional({
   set: (b, a) => a.map(() => b)
 });
 
-export const array = <A>(i: number): Optional<Array<A>, A> => Optional({
-  getOption: (a) => fromOptional(a[i]),
-  set: (b, a) => [...a].splice(i, 1, b)
-});
-
 export const record = <R extends Record<any, any>>(k: keyof R): Optional<R, R[keyof R]> => Optional({
   getOption: (a) => fromOptional(a[k]),
   set: (b, a) => ({ ...a, [k]: b })
@@ -54,12 +50,17 @@ export const fromLens = <A, B>(lens: Lens<A, B>): Optional<A, B> => Optional({
   set: lens.set
 });
 
+export const nth = <A>(i: number): Optional<Array<A>, A> => Optional({
+  getOption: (a) => M.nth(i, a),
+  set: (b, a) => [...a].splice(i, 1, b)
+});
+
 export const last = <A>(): Optional<Array<A>, A> => Optional({
-  getOption: (a) => fromOptional(a[a.length - 1]),
+  getOption: (a) => M.last(a),
   set: (b, a) => [...a, b]
 });
 
 export const first = <A>(): Optional<Array<A>, A> => Optional({
-  getOption: (a) => fromOptional(a[0]),
+  getOption: (a) => M.first(a),
   set: (b, a) => [b, ...a]
 });

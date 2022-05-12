@@ -1,3 +1,4 @@
+import { string } from 'fp-ts';
 import { Either, Left, Right } from './either';
 import *  as M from './maybe';
 import { Just, Maybe, Nothing } from './maybe';
@@ -6,8 +7,10 @@ interface IResult<E, A> {
 	readonly map: <B>(fab: (a: A) => B) => Result<E, B>
 	readonly chain: <B>(fab: (a: A) => Result<E, B>) => Result<E, B>
 	readonly fold: <C>(fec: (e: E) => C, fac: (a: A) => C) => C,
+  readonly or: (a: Result<E, A>) => Result<E, A>,
+  readonly default: (a: A) => Result<E, A>,
 	readonly toEither: () => Either<E, A>,
-	readonly toMaybe: () => Maybe<A>
+	readonly toMaybe: () => Maybe<A>,
 	readonly get: () => A | undefined,
 	readonly getValue: () => Maybe<A>,
 	readonly getError: () => Maybe<E>,
@@ -32,8 +35,10 @@ export const Ok = <A>(value: A): Result<any, A> => ({
   map: (fab) => Ok(fab(value)),
   chain: (fab) => fab(value),
   fold: (fec, fac) => fac(value), 
+  or: () => Ok(value),
+  default: () => Ok(value),
   toEither: () => Right(value),
-  toMaybe: () => Just(value),
+  toMaybe: () => Ok(value).getValue(),
   get: () => value,
   getValue: () => Just(value),
   getError: () => Nothing,
@@ -46,15 +51,17 @@ export const Err = <E>(error: E): Result<E, any> => ({
   map: () => Err(error),
   chain: () => Err(error),
   fold: <B>(fec: (e: E) => B): B => fec(error),
+  or: (a) => a.tag === "ok" ? a : Err(error),
+  default: (a) => Ok(a),
   toEither: () => Left(error),
-  toMaybe: () => Nothing,
+  toMaybe: () => Err(error).getValue(),
   get: () => undefined,
   getValue: () => Nothing,
   getError: () => Just(error),
   toString: () => `Err(${error})`
 });
 
-export const applyTo = <A, B, E>(a: Result<E, A>) => (f: (a: A) => B) => a.map(f);  
+export const applyTo = <A, B, E>(a: Result<E, A>) => (f: (a: A) => B): Result<E, B> => a.map(f);  
 
 export const join = <A, E>(a: Result<E, Result<E, A>>): Result<E, A> => {
   switch (a.tag) {
@@ -64,17 +71,3 @@ export const join = <A, E>(a: Result<E, Result<E, A>>): Result<E, A> => {
     return a;
   }
 };
-
-export const fromOptional = <A, E>(value: A | undefined, err: E): Result<E, A> => {
-  return M.fromOptional(value).toResult(err);
-};
-
-export const fromNullable = <A, E>(value: A | undefined | null, err: E): Result<E, A> => {
-  return M.fromNullable(value).toResult(err);
-};
-
-export const fromNumber = <E>(value: number, err: E): Result<E, number> => {
-  return M.fromNumber(value).toResult(err);
-};
-
-
