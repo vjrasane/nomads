@@ -1,4 +1,4 @@
-import { Just, Maybe, Nothing } from './maybe';
+import { Just, Maybe, Nothing } from '../../maybe';
 import { Err, Ok, Result } from '../../result';
 
 interface IEither<A, B> {

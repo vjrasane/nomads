@@ -1,6 +1,5 @@
-import * as M from '../monads/maybe';
-import { fromOptional, Just, Maybe } from '../monads/maybe';
-import { Result } from '../monads/result/result.wrapper';
+import { fromOptional, Just, Maybe } from '../../maybe';
+import { Result } from '../../result';
 import { Lens } from './lens';
 import { Prism } from './prism';
 
@@ -36,7 +35,7 @@ export const record = <R extends Record<any, any>>(k: keyof R): Optional<R, R[ke
 });
 
 export const result = <E, A>(): Optional<Result<E, A>, A> => Optional({
-  getOption: (a) => a.toMaybe().get(),
+  getOption: (a) => a.toMaybe(),
   set: (b, a) => a.map(() => b)
 });
 
@@ -51,16 +50,16 @@ export const fromLens = <A, B>(lens: Lens<A, B>): Optional<A, B> => Optional({
 });
 
 export const nth = <A>(i: number): Optional<Array<A>, A> => Optional({
-  getOption: (a) => M.nth(i, a),
+  getOption: (a) => Maybe.nth(i, a),
   set: (b, a) => [...a].splice(i, 1, b)
 });
 
 export const last = <A>(): Optional<Array<A>, A> => Optional({
-  getOption: (a) => M.last(a),
+  getOption: (a) => Maybe.last(a),
   set: (b, a) => [...a, b]
 });
 
 export const first = <A>(): Optional<Array<A>, A> => Optional({
-  getOption: (a) => M.first(a),
+  getOption: (a) => Maybe.first(a),
   set: (b, a) => [b, ...a]
 });
