@@ -1,230 +1,233 @@
-import { applyTo, first, fromNullable, fromNumber, fromOptional, join, Just, last, Nothing, nth } from '../src/monads/maybe';
+import { Maybe, Just, Nothing } from '../maybe';
 
 describe('Maybe', () => {
   it('Nothing', () => {
-    expect(Nothing.tag).toBe('nothing');
+    expect(Nothing.unwrap()).toEqual({ tag: "nothing"});
     expect(Nothing.get()).toBe(undefined);
+    expect(Nothing.value).toBe(undefined);
   });
 
   it('Just', () => {
-    expect(Just(42).tag).toBe('just');
+    expect(Just(42).unwrap()).toEqual({ tag: "just", value: 42});
     expect(Just(42).get()).toBe(42);
+    expect(Just(42).value).toBe(42);
   });
 
   describe('map', () => {
     it('maps just value', () => {
-      const mapped = Just('42').map((str) => parseInt(str, 10));
-      expect(mapped.tag).toBe('just');
-      expect(mapped.get()).toBe(42);
+      const mapped = Just(42).map(n => n * 2);
+      expect(mapped.unwrap()).toEqual({ tag: "just", value: 84 });
     });
 
     it('maps nothing value', () => {
       const mapped = Nothing.map((str) => parseInt(str, 10));
-      expect(mapped.tag).toBe('nothing');
-      expect(mapped.get()).toEqual(undefined);
+      expect(mapped.unwrap()).toEqual({ tag: "nothing"});
     });
   });
 
   describe('chain', () => {
     it('chains two just values', () => {
-      const chained = Just('42').chain((str) => Just(parseInt(str, 10)));
-      expect(chained.tag).toBe('just');
-      expect(chained.get()).toBe(42);
+      const chained = Just(42).chain((n) => Just(n * 2));
+      expect(chained.unwrap()).toEqual({ tag: "just", value: 84 });
     });
 
     it('chains two nothing values', () => {
       const chained = Nothing.chain(() => Nothing);
-      expect(chained.tag).toBe('nothing');
-      expect(chained.get()).toEqual(undefined);
+      expect(chained.unwrap()).toEqual({ tag: "nothing"});
     });
 
     it('chains nothing value with just value', () => {
       const chained = Nothing.chain(() => Just(42));
-      expect(chained.tag).toBe('nothing');
-      expect(chained.get()).toEqual(undefined);
+      expect(chained.unwrap()).toEqual({ tag: "nothing"});
     });
 
     it('chains just value with nothing value', () => {
       const chained = Just(42).chain(() => Nothing);
-      expect(chained.tag).toBe('nothing');
-      expect(chained.get()).toEqual(undefined);
+      expect(chained.unwrap()).toEqual({ tag: "nothing"});
     });
   });
 
   describe('or', () => {
     it('just or just returns first value', () => {
-      expect(Just(42).or(Just(0)).get()).toBe(42);
+      const or = Just(42).or(Just(0));
+      expect(or.unwrap()).toEqual({ tag: "just", value: 42 });
     });
     
     it("just or nothing returns first value", () => {
-      expect(Just(42).or(Nothing).get()).toBe(42);
+      const or = Just(42).or(Nothing);
+      expect(or.unwrap()).toEqual({ tag: "just", value: 42 });
     })
 
     it("nothing or just returns second value", () => {
-      expect(Nothing.or(Just(42)).get()).toBe(42);
+      const or = Nothing.or(Just(42));
+      expect(or.unwrap()).toEqual({ tag: "just", value: 42 });
     })
 
-    it("othing or nothing returns nothing", () => {
-      expect(Nothing.or(Nothing).get()).toBe(undefined);
+    it("nothing or nothing returns nothing", () => {
+      const or = Nothing.or(Nothing);
+      expect(or.unwrap()).toEqual({ tag: "nothing" });
+    })
+  });
+
+
+  describe('orElse', () => {
+    it('just orElse just returns second value', () => {
+      const or = Just(42).orElse(Just(0));
+      expect(or.unwrap()).toEqual({ tag: "just", value: 0 });
+    });
+    
+    it("just orElse nothing returns first value", () => {
+      const or = Just(42).orElse(Nothing);
+      expect(or.unwrap()).toEqual({ tag: "just", value: 42 });
+    })
+
+    it("nothing orElse just returns second value", () => {
+      const or = Nothing.orElse(Just(42));
+      expect(or.unwrap()).toEqual({ tag: "just", value: 42 });
+    })
+
+    it("nothing orElse nothing returns nothing", () => {
+      const or = Nothing.orElse(Nothing);
+      expect(or.unwrap()).toEqual({ tag: "nothing" });
     })
   });
 
   describe('default', () => {
     it('just defaults to original value', () => {
-      expect(Just(42).default(0).get()).toBe(42);
+      const def = Just(42).default(0);
+      expect(def.unwrap()).toEqual({ tag: "just", value: 42 });
     });
     
     it('nothing defaults to given value', () => {
-      expect(Nothing.default(42).get()).toBe(42);
+      const def = Nothing.default(0);
+      expect(def.unwrap()).toEqual({ tag: "just", value: 0 });
     });
 
     it('nothing defaults to first default value', () => {
-      expect(Nothing.default(42).default(0).get()).toBe(42);
+      const def = Nothing.default(0).default(-1);
+      expect(def.unwrap()).toEqual({ tag: "just", value: 0 });
     });
   });
 
   describe('applyTo', () => {
     it('just function applies to just value', () => {
-      const applied =  Just(
-        (str: string) => parseInt(str, 10)
-      ).chain(applyTo(Just('42')));
-      expect(applied.tag).toBe('just');
-      expect(applied.get()).toBe(42);
+      const applied =  Just((n: number) => n * 2).chain(Maybe.applyTo(Just(42)));
+      expect(applied.unwrap()).toEqual({ tag: "just", value: 84 });
     });
     
     it('just function applies to nothing', () => {
-      const applied =  Just(
-        (str: string) => parseInt(str, 10)
-      ).chain(applyTo(Nothing));
-      expect(applied.tag).toBe('nothing');
-      expect(applied.get()).toEqual(undefined);
+      const applied =  Just((n: number) => n * 2).chain(Maybe.applyTo(Nothing));
+      expect(applied.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('nothing applies to just value', () => {
-      const applied =  Nothing.chain(applyTo(Just('42')));
-      expect(applied.tag).toBe('nothing');
-      expect(applied.get()).toEqual(undefined);
+      const applied =  Nothing.chain(Maybe.applyTo(Just(42)));
+      expect(applied.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('nothing value applies to nothing', () => {
-      const applied = Nothing.chain(applyTo(Nothing));
-      expect(applied.tag).toBe('nothing');
-      expect(applied.get()).toEqual(undefined);
+      const applied = Nothing.chain(Maybe.applyTo(Nothing));
+      expect(applied.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('applies a curried function multiple times to just values', () => {
       const applied =  Just(
         (a: number) => (b: number) => (c: number) => a + b + c
       )
-        .chain(applyTo(Just(1)))
-        .chain(applyTo(Just(2)))
-        .chain(applyTo(Just(3)));
-      expect(applied.tag).toBe('just');
-      expect(applied.get()).toEqual(6);
+        .chain(Maybe.applyTo(Just(1)))
+        .chain(Maybe.applyTo(Just(2)))
+        .chain(Maybe.applyTo(Just(3)));
+        expect(applied.unwrap()).toEqual({ tag: "just", value: 6 });
     });
 
     it('applies a curried function multiple times to just and nothing values', () => {
       const applied =  Just(
         (a: number) => (b: number) => (c: number) => a + b + c
       )
-        .chain(applyTo(Just(1)))
-        .chain(applyTo(Nothing))
-        .chain(applyTo(Just(3)));
-      expect(applied.tag).toBe('nothing');
-      expect(applied.get()).toEqual(undefined);
+        .chain(Maybe.applyTo(Just(1)))
+        .chain(Maybe.applyTo(Nothing))
+        .chain(Maybe.applyTo(Just(3)));
+        expect(applied.unwrap()).toEqual({ tag: "nothing" });
     });
   });
 
   describe('filter', () => {
     it('filters just value with true condition', () => {
       const filtered = Just(42).filter((n) => n > 0);
-      expect(filtered.tag).toBe('just');
-      expect(filtered.get()).toBe(42);
+      expect(filtered.unwrap()).toEqual({ tag: "just", value: 42 });
     });
 
     it('filters just value with false condition', () => {
       const filtered = Just(42).filter((n) => n < 0);
-      expect(filtered.tag).toBe('nothing');
-      expect(filtered.get()).toBe(undefined);
+      expect(filtered.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('filters nothing with condition', () => {
       const filtered = Nothing.filter((n) => n < 0);
-      expect(filtered.tag).toBe('nothing');
-      expect(filtered.get()).toBe(undefined);
+      expect(filtered.unwrap()).toEqual({ tag: "nothing" });
     });
   });
 
   describe('fromOptional', () => {
     it('gets just from value', () => {
-      const maybe = fromOptional(42);
-      expect(maybe.tag).toEqual('just');
-      expect(maybe.get()).toEqual(42);
+      const maybe = Maybe.fromOptional(42);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: 42 });
     });
 
     it('gets nothing from undefined', () => {
-      const maybe = fromOptional(undefined);
-      expect(maybe.tag).toEqual('nothing');
+      const maybe = Maybe.fromOptional(undefined);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('gets just from null', () => {
-      const maybe = fromOptional(null);
-      expect(maybe.tag).toEqual('just');
-      expect(maybe.get()).toEqual(null);
+      const maybe = Maybe.fromOptional(null);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: null });
     });
   });
 
   describe('fromNullable', () => {
     it('gets just from value', () => {
-      const maybe = fromNullable(42);
-      expect(maybe.tag).toEqual('just');
-      expect(maybe.get()).toEqual(42);
+      const maybe = Maybe.fromNullable(42);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: 42 });
     });
 
     it('gets nothing from undefined', () => {
-      const maybe = fromNullable(undefined);
-      expect(maybe.tag).toEqual('nothing');
-      expect(maybe.get()).toEqual(undefined);
+      const maybe = Maybe.fromNullable(undefined);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('gets nothing from null', () => {
-      const maybe = fromNullable(null);
-      expect(maybe.tag).toEqual('nothing');
-      expect(maybe.get()).toEqual(undefined);
+      const maybe = Maybe.fromNullable(null);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" });
     });
   });
 
   describe('fromNumber', () => {
     it('gets just from number', () => {
-      const maybe = fromNumber(42);
-      expect(maybe.tag).toEqual('just');
-      expect(maybe.get()).toEqual(42);
+      const maybe = Maybe.fromNumber(42);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: 42 });
     });
 
     it('gets nothing from NaN', () => {
-      const maybe = fromNumber(NaN);
-      expect(maybe.tag).toEqual('nothing');
-      expect(maybe.get()).toEqual(undefined);
+      const maybe = Maybe.fromNumber(NaN);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" });
     });
   });
 
   describe('join', () => {
     it('joins nested just values', () => {
-      const joined = join(Just(Just(42)));
-      expect(joined.tag).toBe('just');
-      expect(joined.get()).toBe(42);
+      const joined = Maybe.join(Just(Just(42)));
+      expect(joined.unwrap()).toEqual({ tag: "just", value: 42 });
     });
 
     it('joins nothing value', () => {
-      const joined = join(Nothing);
-      expect(joined.tag).toBe('nothing');
-      expect(joined.get()).toBe(undefined);
+      const joined = Maybe.join(Nothing);
+      expect(joined.unwrap()).toEqual({ tag: "nothing" });
     });
 
     it('joins nested nothing value', () => {
-      const joined = join(Just(Nothing));
-      expect(joined.tag).toBe('nothing');
-      expect(joined.get()).toBe(undefined);
+      const joined = Maybe.join(Just(Nothing));
+      expect(joined.unwrap()).toEqual({ tag: "nothing" });
     });
   });
 
@@ -244,16 +247,16 @@ describe('Maybe', () => {
 
   describe('fold', () => {
     it('folds just value', () => {  
-      expect(Just('42').fold(
-        (str) => parseInt(str, 10),
-        () => 69
-      )).toBe(42);
+      expect(Just(42).fold(
+        () => 69,
+        (n) => n * 2,
+      )).toBe(84);
     });
 
     it('folds nothing value', () => {  
       expect(Nothing.fold(
-        (str) => parseInt(str, 10),
-        () => 69
+        () => 69,
+        (n) => n * 2
       )).toBe(69);
     });
   });
@@ -274,82 +277,99 @@ describe('Maybe', () => {
 
   describe('toResult', () => {
     it ('gets ok from just value', () => {
-      const res = Just(42).toResult(undefined);
-      expect(res.tag).toBe('ok');
-      expect(res.get()).toBe(42);
+      const res = Just(42).toResult("error");
+      expect(res.unwrap()).toEqual({ tag: "ok", value: 42 });
     });
 
     it ('gets err from nothing value', () => {
-      const res = Nothing.toResult('no value');
-      expect(res.tag).toBe('err');
-      expect(res.get()).toBe(undefined);
-      expect(res.getError().get()).toBe('no value');
+      const res = Nothing.toResult('error');
+      expect(res.unwrap()).toEqual({ tag: "err", error: "error" });
     });
   });
 
   describe("nth", () => {
     it("gets just value from array", () => {
-      expect(nth(1, [1,2,3]).get()).toBe(2)
+      expect(Maybe.nth(1, [1,2,3]).unwrap()).toEqual({ tag: "just", value: 2})
     })
     
     it("gets nothing value from empty array", () => {
-      expect(nth(1, []).get()).toBe(undefined)
+      expect(Maybe.nth(1, []).unwrap()).toEqual({ tag: "nothing" })
     })
 
     it("gets nothing value from undefined value", () => {
-      const maybe = nth(1, [undefined, undefined]);
-      expect(maybe.tag).toBe("nothing");
-      expect(maybe.get()).toBe(undefined)
+      const maybe = Maybe.nth(1, [undefined, undefined]);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" })
     })
 
     it("gets just value from null value", () => {
-      const maybe = nth(1, [null, null]);
-      expect(maybe.tag).toBe("just");
-      expect(maybe.get()).toBe(null)
+      const maybe = Maybe.nth(1, [null, null]);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: null });
     })
   })
 
   describe("first", () => {
     it("gets first value from array", () => {
-      expect(first([1,2,3]).get()).toBe(1)
+      expect(Maybe.first([1,2,3]).unwrap()).toEqual({ tag: "just", value: 1 })
     })
     
     it("gets nothing value from empty array", () => {
-      expect(first([]).get()).toBe(undefined)
+      expect(Maybe.first([]).unwrap()).toEqual({ tag: "nothing" })
     })
 
     it("gets nothing value from undefined value", () => {
-      const maybe = first([undefined, undefined]);
-      expect(maybe.tag).toBe("nothing");
-      expect(maybe.get()).toBe(undefined)
+      const maybe = Maybe.first([undefined, undefined]);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" })
     })
 
     it("gets just value from null value", () => {
-      const maybe = first([null, null]);
-      expect(maybe.tag).toBe("just");
-      expect(maybe.get()).toBe(null)
+      const maybe = Maybe.first([null, null]);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: null });
     })
   })
 
   describe("last", () => {
     it("gets last value from array", () => {
-      expect(last([1,2,3]).get()).toBe(3)
+      expect(Maybe.last([1,2,3]).unwrap()).toEqual({ tag: "just", value: 3 })
     })
     
     it("gets nothing value from empty array", () => {
-      expect(last([]).get()).toBe(undefined)
+      expect(Maybe.last([]).unwrap()).toEqual({ tag: "nothing" })
     })
 
     it("gets nothing value from undefined value", () => {
-      const maybe = last([undefined, undefined]);
-      expect(maybe.tag).toBe("nothing");
-      expect(maybe.get()).toBe(undefined)
+      const maybe = Maybe.last([undefined, undefined]);
+      expect(maybe.unwrap()).toEqual({ tag: "nothing" })
     })
 
     it("gets just value from null value", () => {
-      const maybe = last([null, null]);
-      expect(maybe.tag).toBe("just");
-      expect(maybe.get()).toBe(null)
+      const maybe = Maybe.last([null, null]);
+      expect(maybe.unwrap()).toEqual({ tag: "just", value: null });
+    })
+  })
+
+  describe("unwrap", () => {
+    it("switch case for just", () => {
+      const unwrapped = Just(42).unwrap();
+      switch(unwrapped.tag) {
+        case "just": {
+          expect(unwrapped.value).toBe(42)
+          break;
+        }
+        default:
+          fail("should never enter the default case")
+      }
+    })
+
+    it("switch case for nothing", () => {
+      const unwrapped = Nothing.unwrap();
+      switch(unwrapped.tag) {
+        case "nothing": {
+          expect(true).toBe(true)
+          break;
+        }
+        default:
+          fail("should never enter the default case")
+      }
     })
   })
 });

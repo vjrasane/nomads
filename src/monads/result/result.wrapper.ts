@@ -1,9 +1,9 @@
 import { Either } from "../either";
-import { Maybe } from "../maybe";
+import { Maybe } from "../../../maybe";
 import * as I from "./result.internal";
 
 export class Result<E, A> {
-	constructor(readonly internal: I.Result<E, A>) {}
+	constructor(private readonly internal: I.Result<E, A>) {}
 
 	get value(): A | undefined {
 		return I.toOptional(this.internal)
@@ -27,10 +27,11 @@ export class Result<E, A> {
 	toEither = (): Either<E, A> => I.toEither(this.internal)
 	toMaybe = (): Maybe<A> => this.getValue()
 	get = (): A | undefined => this.value
-	getOrElse = (def: A) => this.value ?? def
+	getOrElse = (def: A) => I.getOrElse(def)(this.internal)
 	getValue = (): Maybe<A> => I.getValue(this.internal)
 	getError = (): Maybe<E> => I.getError(this.internal)
 	toString = (): string => I.toString(this.internal)
+	unwrap = (): I.Result<E, A> => this.internal
 
 	static Ok = <A>(value: A) => new Result<any, A>(I.Ok(value));
 	

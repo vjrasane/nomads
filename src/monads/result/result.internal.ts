@@ -1,6 +1,6 @@
 
 import { Either, Left, Right } from "../either";
-import { Just, Maybe, Nothing } from "../maybe";
+import { Just, Maybe, Nothing } from "../../../maybe";
 
 type Ok<A> = { 
 	readonly tag: "ok", 
@@ -45,15 +45,6 @@ export const mapError = <E, A, B>(feb: (e: E) => B) => (ra: Result<E, A>): Resul
 	}
 }
 
-export const chain = <E, A, B>(fab: (a: A) => Result<E, B>) => (ra: Result<E, A>): Result<E, B> => {
-	switch(ra.tag) {
-		case "ok":
-			return fab(ra.value);
-		default:
-			return ra;
-	}
-}
-
 export const fold = <E, A, B>(feb: (e: E) => B, fab: (a: A) => B) => (ra: Result<E, A>): B => {
 	switch(ra.tag) {
 		case "ok":
@@ -92,8 +83,6 @@ export const toEither = <E, A>(r: Result<E, A>): Either<E, A> => {
 	}
 }
 
-export const toMaybe = <E, A>(r: Result<E, A>): Maybe<A> => getValue(r)
-
 export const getError = <E, A>(r: Result<E, A>): Maybe<E> => {
 	switch(r.tag) {
 		case "ok":
@@ -103,6 +92,14 @@ export const getError = <E, A>(r: Result<E, A>): Maybe<E> => {
 	}
 }
 
+export const getOrElse = <E, A>(def: A) => (r: Result<E, A>): A => {
+	switch(r.tag) {
+		case "ok":
+			return r.value;
+		default:
+			return def;
+	}
+}
 
 export const getValue = <E, A>(r: Result<E, A>): Maybe<A> => {
 	switch(r.tag) {
