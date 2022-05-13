@@ -1,1 +1,1 @@
-export * from './src/monads/task';
+export * from './src/monads/task/task.wrapper';

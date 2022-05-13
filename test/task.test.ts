@@ -1,188 +1,172 @@
-// import { resolve, reject, Task } from "../src/monads/task";
+import { resolve, reject, Task } from "../task";
 
 
-// jest.useFakeTimers();
+jest.useFakeTimers();
 
-// const resolveAfter = <A>(resolver: () => A, ms: number): Promise<A> => new Promise(
-// 	resolve => setTimeout(() => resolve(resolver()), ms)
-// )
+const resolveAfter = <A>(resolver: () => A, ms: number): Promise<A> => new Promise(
+	resolve => setTimeout(() => resolve(resolver()), ms)
+)
 
-// const rejectsAfter = <A>(rejector: () => A, ms: number): Promise<never> => new Promise(
-// 	(resolve, reject) => setTimeout(() => reject(rejector()), ms)
-// )
+const rejectsAfter = <A>(rejector: () => A, ms: number): Promise<never> => new Promise(
+	(resolve, reject) => setTimeout(() => reject(rejector()), ms)
+)
 
-// describe("Task", () => {
-// 	describe("fork", () => {
-// 		it("only runs promise when fork is called", async () => {
-// 			const resolver = jest.fn().mockImplementationOnce(
-// 				() => 42
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => resolveAfter(resolver, 1000)
-// 			);
-// 			const task = Task(init);
-// 			expect(init).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(resolver).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			const result = await process;
-// 			expect(resolver).toHaveBeenCalledTimes(1);
-// 			expect(result.get()).toBe(42);
-// 		});
+describe("Task", () => {
+	describe("fork", () => {
+		it("only runs promise when fork is called", async () => {
+			const resolver = jest.fn().mockImplementationOnce(
+				() => 42
+			)
+			const init = jest.fn().mockImplementationOnce(
+				() => resolveAfter(resolver, 1000)
+			);
+			const task = Task.from<number>(init);
+			expect(init).not.toHaveBeenCalled();
+			jest.runAllTimers();
+			expect(init).not.toHaveBeenCalled();
+			const process = task.fork();
+			expect(init).toHaveBeenCalledTimes(1);
+			expect(resolver).not.toHaveBeenCalled();
+			jest.runAllTimers();
+			const result = await process;
+			expect(resolver).toHaveBeenCalledTimes(1);
+			expect(result).toBe(42);
+		});
 
-// 		it("rejects with error if thrown", async () => {
-// 			const rejector = jest.fn().mockImplementationOnce(
-// 				() => "error"
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => rejectsAfter(rejector, 1000)
-// 			);
-// 			const task = Task(init);
-// 			expect(init).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(rejector).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			const result = await process;
-// 			expect(result.getError().get()).toBe("error");
-// 			expect(rejector).toHaveBeenCalledTimes(1);
-// 		});
-// 	});
+		it("rejects with error if thrown", async () => {
+			const rejector = jest.fn().mockImplementationOnce(
+				() => "error"
+			)
+			const init = jest.fn().mockImplementationOnce(
+				() => rejectsAfter(rejector, 1000)
+			);
+			const task = Task.from<number>(init);
+			expect(init).not.toHaveBeenCalled();
+			jest.runAllTimers();
+			expect(init).not.toHaveBeenCalled();
+			const process = task.fork();
+			expect(init).toHaveBeenCalledTimes(1);
+			expect(rejector).not.toHaveBeenCalled();
+			jest.runAllTimers();
+			await expect(process).rejects.toBe("error");
+			expect(rejector).toHaveBeenCalledTimes(1);
+		});
+	});
 
-// 	describe("map", () => {
-// 		it ("maps task and runs only after fork", async () => {
-// 			const resolver = jest.fn().mockImplementationOnce(
-// 				() => 42
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => resolveAfter(resolver, 1000)
-// 			);
-// 			const task = Task<number>(init)
-// 				.map(n => n * 2);
-// 			expect(init).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(resolver).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			const result = await process;
-// 			expect(resolver).toHaveBeenCalledTimes(1);
-// 			expect(result.get()).toBe(84);
-// 		})
+	describe("map", () => {
+		it("maps resolving promise", async () => {
+			await expect(Task.resolve(42).map(n => n * 2).fork()).resolves.toBe(84)
+		})
 
-// 		it ("maps task but rejects if error is thrown", async () => {
-// 			const rejector = jest.fn().mockImplementationOnce(
-// 				() => "error"
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => rejectsAfter(rejector, 1000)
-// 			);
-// 			const task = Task<number>(init)
-// 				.map(n => n * 2);
-// 			expect(init).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(rejector).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			const result = await process;
-// 			expect(result.getError().get()).toBe("error");
-// 			expect(rejector).toHaveBeenCalledTimes(1);
-// 		})
-// 	})
+		it("maps rejecting promise", async () => {
+			await expect(Task.reject("error").map(n => n * 2).fork()).rejects.toBe("error")
+		})
+	})
 
-// 	describe("chain", () => {
-// 		it ("chains task and runs only after fork", async () => {
-// 			const resolver1 = jest.fn().mockImplementationOnce(
-// 				() => 42
-// 			)
-// 			const resolver2 = jest.fn().mockImplementationOnce(
-// 				() => 0
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => resolveAfter(resolver1, 1000)
-// 			);
-// 			const init2 = jest.fn().mockImplementation(
-// 				() => Promise.resolve(resolver2())
-// 			)
-// 			const task = Task<number>(init)
-// 				.chain(
-// 					(n) => Task(init2)
-// 				);
-// 			expect(init).not.toHaveBeenCalled();
-// 			expect(init2).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			expect(init2).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(init2).not.toHaveBeenCalled();
-// 			expect(resolver1).not.toHaveBeenCalled();
-// 			expect(resolver2).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(resolver1).toHaveBeenCalledTimes(1);
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			const result = await process;
-// 			expect(init2).toHaveBeenCalledTimes(1);
-// 			expect(resolver2).toHaveBeenCalledTimes(1);
-// 			expect(result.get()).toBe(0);
-// 		})
+	describe("chain", () => {
+		it("chains resolving promise", async () => {
+			await expect(Task.resolve(42).chain(n => Task.resolve(n * 2)).fork()).resolves.toBe(84)
+		})
 
-// 		it ("chains task but rejects if error is throw in first task", async () => {
-// 			const rejector = jest.fn().mockImplementationOnce(
-// 				() => "error"
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => rejectsAfter(rejector, 1000)
-// 			);
-// 			const task = Task<number>(init)
-// 				.chain(n => resolve(n * 2));
-// 			expect(init).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(rejector).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			const result = await process;
-// 			expect(result.getError().get()).toBe("error");
-// 			expect(rejector).toHaveBeenCalledTimes(1);
-// 		})
+		it("chains rejecting promise with resolving promise", async () => {
+			await expect(Task.reject("first").chain(n => Task.resolve(n * 2)).fork()).rejects.toBe("first")
+		})
 
+		it("chains rejecting promise with rejecting promise", async () => {
+			await expect(Task.reject("first").chain(n => Task.reject("second")).fork()).rejects.toBe("first")
+		})
 
-// 		it ("chains task but rejects if error is throw in second task", async () => {
-// 			const resolver = jest.fn().mockImplementationOnce(
-// 				() => 42
-// 			)
-// 			const init = jest.fn().mockImplementationOnce(
-// 				() => resolveAfter(resolver, 1000)
-// 			);
-// 			const task = Task<number>(init)
-// 				.chain(n => reject("error"));
-// 			expect(init).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			expect(init).not.toHaveBeenCalled();
-// 			const process = task.fork();
-// 			expect(init).toHaveBeenCalledTimes(1);
-// 			expect(resolver).not.toHaveBeenCalled();
-// 			jest.runAllTimers();
-// 			const result = await process;
-// 			expect(result.getError().get()).toBe("error");
-// 			expect(resolver).toHaveBeenCalledTimes(1);
-// 		})
-// 	});
+		it("chains resolving promise with rejecting promise", async () => {
+			await expect(Task.resolve(42).chain(n => Task.reject("second")).fork()).rejects.toBe("second")
+		})
+	})
 
-// 	describe("resolve", () => {
-// 		it ("creates a task that returns a promise that resolves to a value", async () => {
-// 			const result = await resolve(42).fork();
-// 			expect(result.get()).toBe(42);
-// 		})
-// 	});
-// })
+	describe("encase", () => {
+		it("encases resolving promise", async () => {
+			const result = await Task.resolve(42).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "ok", value: 42 })
+		})
+
+		it("encases rejecting promise", async () => {
+			const result = await Task.reject("error").encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "error" })
+		})
+
+		it("encases mapped resolving promise", async () => {
+			const result = await Task.resolve(42).map(n => n * 2).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "ok", value: 84 })
+		})
+
+		it("encases mapped rejecting promise", async () => {
+			const result = await Task.reject("error").map(n => n * 2).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "error" })
+		})
+
+		it("encases chained resolving promise", async () => {
+			const result = await Task.resolve(42).chain(n => Task.resolve(n * 2)).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "ok", value: 84 })
+		})
+
+		it("encases chained rejecting promise with resolving promise", async () => {
+			const result = await Task.reject("first").chain(n => Task.resolve(n * 2)).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "first" })
+		})
+
+		it("encases chained rejecting promise with rejecting promise", async () => {
+			const result = await Task.reject("first").chain(n => Task.reject("second")).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "first" })
+		})
+
+		it("encases chained resolving promise with rejecting promise", async () => {
+			const result = await Task.resolve(42).chain(n => Task.reject("second")).encase().fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "second" })
+		})
+
+		it("maps encased resolving task", async () => {
+			const result = await Task.resolve(42).encase().map(r => r.map(n => n * 2)).fork();
+			expect(result.unwrap()).toEqual({ tag: "ok", value: 84 })
+		})
+
+		it("maps encased rejecting task", async () => {
+			const result = await Task.reject("error").encase().map(r => r.map(n => n * 2)).fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "error" })
+		})
+
+		it("maps error of encased rejecting task", async () => {
+			const result = await Task.reject("error").encase().map(r => r.mapError(str => str.toUpperCase())).fork();
+			expect(result.unwrap()).toEqual({ tag: "err", error: "ERROR" })
+		})
+
+		it("maps error of encased resolving task", async () => {
+			const result = await Task.resolve(42).encase().map(r => r.mapError(str => str.toUpperCase())).fork();
+			expect(result.unwrap()).toEqual({ tag: "ok", value: 42 })
+		})
+
+		it("folds encased resolving task", async () => {
+			const result = await Task.resolve(42).encase().map(r => r.fold(() => 0, n => n * 2)).fork();
+			expect(result).toEqual(84)
+		})
+
+		it("folds encased rejecting task", async () => {
+			const result = await Task.reject("error").encase().map(r => r.fold(() => 0, n => n * 2)).fork();
+			expect(result).toEqual(0)
+		})
+	})
+
+	describe("unwrap", () => {
+		it("unwraps resolving promise", async () => {
+			const fork = Task.resolve(42).unwrap()
+			await expect(fork()).resolves.toBe(42)
+		})
+
+		it("unwraps rejecting promise", async () => {
+			const fork = Task.reject("error").unwrap()
+			await expect(fork()).rejects.toBe("error")
+		})
+
+		it("unwraps mapped resolving promise", async () => {
+			const fork = Task.resolve(42).map(n => n * 2).unwrap()
+			await expect(fork()).resolves.toBe(84)
+		})
+	})
+})
