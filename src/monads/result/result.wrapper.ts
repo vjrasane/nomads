@@ -3,7 +3,7 @@ import { Maybe } from "../../../maybe";
 import * as I from "./result.internal";
 
 export class Result<E, A> {
-	constructor(private readonly internal: I.Result<E, A>) {}
+	private constructor(private readonly internal: I.Result<E, A>) {}
 
 	get value(): A | undefined {
 		return I.toOptional(this.internal)
