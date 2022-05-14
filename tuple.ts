@@ -1,1 +1,1 @@
-export * from './src/monads/tuple';
+export * from './src/monads/tuple/tuple.wrapper';

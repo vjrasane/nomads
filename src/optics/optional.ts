@@ -1,19 +1,19 @@
-import { fromOptional, Just, Maybe } from '../../maybe';
+import { Just, Maybe } from '../../maybe';
 import { Result } from '../../result';
 import { Lens } from './lens';
 import { Prism } from './prism';
 
 export interface Optional<A, B> {
-	readonly getOption : (a: A) => Maybe<B>
-  readonly set : (b: B, a: A) => A
-	readonly compose: <C>(optional: Optional<B, C>) => Optional<A, C>,
-	readonly modify: (fbb: (b: B) => B, a: A) => A
-	readonly modifyOption: (fbb: (b: B) => B, a: A) => Maybe<A>
+  readonly getOption: (a: A) => Maybe<B>
+  readonly set: (b: B, a: A) => A
+  readonly compose: <C>(optional: Optional<B, C>) => Optional<A, C>,
+  readonly modify: (fbb: (b: B) => B, a: A) => A
+  readonly modifyOption: (fbb: (b: B) => B, a: A) => Maybe<A>
 }
 
 export const Optional = <A, B>(optional: {
-	getOption : (a: A) => Maybe<B>
-  set : (b: B, a: A) => A
+  getOption: (a: A) => Maybe<B>
+  set: (b: B, a: A) => A
 }): Optional<A, B> => ({
     ...optional,
     compose: (obc) => Optional({
@@ -30,7 +30,7 @@ export const maybe = <A>(): Optional<Maybe<A>, A> => Optional({
 });
 
 export const record = <R extends Record<any, any>>(k: keyof R): Optional<R, R[keyof R]> => Optional({
-  getOption: (a) => fromOptional(a[k]),
+  getOption: (a) => Maybe.fromOptional(a[k]),
   set: (b, a) => ({ ...a, [k]: b })
 });
 

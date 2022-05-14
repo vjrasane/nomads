@@ -1,1 +1,1 @@
-export * from './src/monads/either';
+export * from './src/monads/either/either.wrapper';
