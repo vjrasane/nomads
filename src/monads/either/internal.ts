@@ -1,5 +1,6 @@
 import { Maybe, Just, Nothing } from '../../../maybe';
 import { Result, Ok, Err } from '../../../result';
+import { Tuple } from '../tuple';
 
 type Left<A> = {
   readonly tag: 'left';
@@ -92,4 +93,9 @@ export const toResult = <A, B>(e: Either<A, B>): Result<A, B> => {
   default:
     return Err(e.value);
   }
+};
+
+
+export const toTuple = <A, B>(e: Either<A, B>): Tuple<Maybe<A>, Maybe<B>> => {
+  return Tuple.of(getLeft(e), getRight(e));
 };

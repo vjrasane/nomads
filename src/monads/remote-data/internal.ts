@@ -86,6 +86,22 @@ export const defaultTo =
       }
     };
 
+export const or =
+    <E, A>(first: RemoteData<E, A>) =>
+    (second: RemoteData<E, A>): RemoteData<E, A> => {
+      switch (second.tag) {
+      case 'success':
+        return first.tag === 'success' ? first : second;
+      default:
+        return first;
+      }
+    };
+  
+export const orElse =
+    <E, A>(first: RemoteData<E, A>) =>
+    (second: RemoteData<E, A>): RemoteData<E, A> =>
+      or(second)(first);
+
 export const toString = <E, A>(r: RemoteData<E, A>): string => {
   switch (r.tag) {
   case 'stand by':

@@ -9,6 +9,10 @@ const rejectsAfter = <A>(rejector: () => A, ms: number): Promise<never> =>
   new Promise((resolve, reject) => setTimeout(() => reject(rejector()), ms));
 
 describe('Task', () => {
+  it('tag', () => {
+    expect(Task.resolve(42).tag).toBe('task');
+  });
+
   describe('fork', () => {
     it('only runs promise when fork is called', async () => {
       const resolver = jest.fn().mockImplementationOnce(() => 42);
