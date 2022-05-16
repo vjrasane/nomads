@@ -45,14 +45,19 @@ export const filter =
       }
     };
 
+export type Fold<A, B> = {
+  just: (a: A) => B,
+  nothing: () => B
+}
+
 export const fold =
-  <A, B>(fb: () => B, fab: (a: A) => B) =>
+  <A, B>(f: Fold<A, B>) =>
     (m: Maybe<A>): B => {
       switch (m.tag) {
       case 'just':
-        return fab(m.value);
+        return f.just(m.value);
       default:
-        return fb();
+        return f.nothing();
       }
     };
 

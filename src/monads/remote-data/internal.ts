@@ -86,6 +86,26 @@ export const defaultTo =
       }
     };
 
+export type Fold<E, A, B> = {
+  success: (a: A) => B,
+  loading: () => B,
+  'stand by': () => B,
+  failure: (e: E) => B
+}
+
+export const fold = <E, A, B>(f: Fold<E, A, B>) => (r: RemoteData<E, A>): B => {
+  switch(r.tag) {
+  case 'success':
+    return f.success(r.data);
+  case 'failure':
+    return f.failure(r.error);
+  case 'stand by':
+    return f['stand by']();
+  default:
+    return f.loading();
+  }
+};
+
 export const or =
     <E, A>(first: RemoteData<E, A>) =>
     (second: RemoteData<E, A>): RemoteData<E, A> => {

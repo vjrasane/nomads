@@ -39,14 +39,19 @@ export const mapLeft =
       }
     };
 
+export type Fold<A, B, C> = {
+  left: (a: A) => C,
+  right: (b: B) => C
+}
+
 export const fold =
-  <A, B, C>(fac: (a: A) => C, fbc: (b: B) => C) =>
+  <A, B, C>(f: Fold<A, B, C>) =>
     (e: Either<A, B>): C => {
       switch (e.tag) {
       case 'left':
-        return fac(e.value);
+        return f.left(e.value);
       default:
-        return fbc(e.value);
+        return f.right(e.value);
       }
     };
 

@@ -1,4 +1,5 @@
 import { Maybe } from '../maybe';
+import { NonEmptyArray } from '../non-empty-array';
 import * as I from './internal';
 
 type TypeOfRemoteData<R> = R extends RemoteData<any, infer T> ? T : never;
@@ -37,6 +38,7 @@ export class RemoteData<E, A> {
   or = (ra: RemoteData<E, A>) => this.apply(I.orElse(ra.internal));
   orElse = (ra: RemoteData<E, A>) => this.apply(I.or(ra.internal));
   default = (a: A): RemoteData<E, A> => this.apply(I.defaultTo(a));
+  fold = <B>(f: I.Fold<E, A, B>): B => I.fold(f)(this.internal);
   toMaybe = (): Maybe<A> => this.getData();
   get = (): A | undefined => this.data;
   getOrElse = (def: A) => I.getOrElse(def)(this.internal);
@@ -51,6 +53,29 @@ export class RemoteData<E, A> {
     default:
       return new RemoteData(r.internal);
     }
+  };
+
+  static all = <A extends Array<RemoteData<E, any>>, E = any>(arr: A): RemoteData<E, { [P in keyof A]: TypeOfRemoteData<A[P]> }> => {
+    return arr.reduce((acc, curr): RemoteData<E, Partial<{ [P in keyof A]: TypeOfRemoteData<A[P]> }>> => acc.chain(
+      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: TypeOfRemoteData<A[P]> }>)
+    ), Success([]));
+  };
+    
+  static some = <A extends NonEmptyArray<RemoteData<E, any>>, E = any>(arr: A): RemoteData<E, TypeOfRemoteData<A[number]>> => {
+    return arr.reduce((acc, curr): RemoteData<E, TypeOfRemoteData<A[number]>> => acc.or(curr));
+  };
+    
+  static values = <A extends Array<RemoteData<E, any>>, E = any>(arr: A): Array<TypeOfRemoteData<A[number]>> => {
+    return arr.reduce((acc: Array<TypeOfRemoteData<A[number]>>, curr: A[number]): Array<TypeOfRemoteData<A[number]>> => 
+      curr.fold<Array<TypeOfRemoteData<A[number]>>>(
+        {
+          'stand by': () => acc,
+          loading: () => acc,
+          failure: () => acc,
+          success: (v) => [...acc, v]
+        }
+      )
+    , []);
   };
 
   static record = <R extends Record<string, RemoteData<E, any>>, E = any>(record: R): RemoteData<E, { [P in keyof R]: TypeOfRemoteData<R[P]> }> => {

@@ -27,7 +27,7 @@ export class Maybe<A> {
   map = <B>(fab: (a: A) => B): Maybe<B> => this.apply(I.map(fab));
   chain = <B>(fab: (a: A) => Maybe<B>): Maybe<B> => Maybe.join(this.apply(I.map(fab)));
   filter = (f: (a: A) => boolean): Maybe<A> => this.apply(I.filter(f));
-  fold = <B>(fb: () => B, fab: (a: A) => B): B => I.fold(fb, fab)(this.internal);
+  fold = <B>(f: I.Fold<A, B>): B => I.fold(f)(this.internal);
   or = (m: Maybe<A>) => this.apply(I.orElse(m.internal));
   orElse = (m: Maybe<A>) => this.apply(I.or(m.internal));
   default = (a: A) => this.apply(I.defaultTo(a));
@@ -56,6 +56,26 @@ export class Maybe<A> {
   static first = <A>(arr: Array<A>): Maybe<A> => Maybe.from(I.first(arr));
   static last = <A>(arr: Array<A>): Maybe<A> => Maybe.from(I.last(arr));
 
+  static all = <A extends Array<Maybe<any>>>(arr: A): Maybe<{ [P in keyof A]: TypeOfMaybe<A[P]> }> => {
+    return arr.reduce((acc, curr): Maybe<Partial<{ [P in keyof A]: TypeOfMaybe<A[P]> }>> => acc.chain(
+      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: TypeOfMaybe<A[P]> }>)
+    ), Just([]));
+  };
+
+  static some = <A extends Array<Maybe<any>>>(arr: A): Maybe<TypeOfMaybe<A[number]>> => {
+    return arr.reduce((acc, curr): Maybe<TypeOfMaybe<A[number]>> => 
+      acc.or(curr)
+    , Nothing);
+  };
+
+  static values = <A extends Array<Maybe<any>>>(arr: A): Array<TypeOfMaybe<A[number]>> => {
+    return arr.reduce((acc: Array<TypeOfMaybe<A[number]>>, curr: A[number]): Array<TypeOfMaybe<A[number]>> => 
+      curr.fold<Array<TypeOfMaybe<A[number]>>>({
+        nothing: () => acc,
+        just: v => [...acc, v]
+      }), []);
+  };
+
   static record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<{ [P in keyof R]: TypeOfMaybe<R[P]> }> => {
     return Object.entries(record).reduce((acc, [key, value]): Maybe<Partial<{ [P in keyof R]: TypeOfMaybe<R[P]> }>> => {
       return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
@@ -75,3 +95,6 @@ export const first = Maybe.first;
 export const last = Maybe.last;
 export const join = Maybe.join;
 export const record = Maybe.record;
+export const some = Maybe.some;
+export const all = Maybe.all;
+export const values = Maybe.values;
