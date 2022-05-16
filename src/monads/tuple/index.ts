@@ -29,6 +29,7 @@ export class Tuple<A, B> {
   mapBoth = <C, D>(fac: (a: A) => C, fbd: (b: B) => D): Tuple<C, D> => this.apply(I.mapBoth(fac, fbd));
   swap = (): Tuple<B, A> => this.apply(I.swap);
   fold = <C>(fabc: (a: A, b: B) => C): C => I.fold(fabc)(this.internal);
+  toArray = (): [A, B] => I.toArray(this.internal);
   toString = (): string => I.toString(this.internal);
 
   static fromArray = <A, B>(arr: [A, B]): Tuple<A, B> => Tuple.from(I.fromArray(arr));
