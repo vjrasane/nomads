@@ -5,9 +5,9 @@ describe('Lens', () => {
     const data = {
       first: {
         second: {
-          third: 'value'
-        }
-      }
+          third: 'value',
+        },
+      },
     };
 
     const first = prop<typeof data>('first');
@@ -16,12 +16,12 @@ describe('Lens', () => {
 
     const comp = first.compose(second).compose(third);
     expect(comp.get(data)).toBe('value');
-    expect(comp.set('modified', data)).toEqual( {
+    expect(comp.set('modified', data)).toEqual({
       first: {
         second: {
-          third: 'modified'
-        }
-      }
+          third: 'modified',
+        },
+      },
     });
   });
 });

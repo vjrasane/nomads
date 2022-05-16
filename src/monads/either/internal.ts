@@ -1,50 +1,56 @@
 import { Maybe, Just, Nothing } from '../../../maybe';
 import { Result, Ok, Err } from '../../../result';
 
-type Left<A> = { 
-	readonly tag: 'left',
-	readonly value: A
-}
+type Left<A> = {
+  readonly tag: 'left';
+  readonly value: A;
+};
 
-type Right<A> = { 
-	readonly tag: 'right',
-	readonly value: A
-}
+type Right<A> = {
+  readonly tag: 'right';
+  readonly value: A;
+};
 
 export type Either<A, B> = Left<A> | Right<B>;
 
 export const Right = <A>(value: A): Either<any, A> => ({ tag: 'right', value });
 export const Left = <A>(value: A): Either<A, any> => ({ tag: 'left', value });
 
-export const mapRight = <A, B, C>(fbc: (a: B) => C) => (e: Either<A, B>): Either<A, C> => {
-  switch(e.tag) {
-  case 'right':
-    return Right(fbc(e.value));
-  default:
-    return e;
-  }
-};
+export const mapRight =
+  <A, B, C>(fbc: (a: B) => C) =>
+    (e: Either<A, B>): Either<A, C> => {
+      switch (e.tag) {
+      case 'right':
+        return Right(fbc(e.value));
+      default:
+        return e;
+      }
+    };
 
-export const mapLeft = <A, B, C>(fac: (a: A) => C) => (e: Either<A, B>): Either<C, B> => {
-  switch(e.tag) {
-  case 'right':
-    return e;
-  default:
-    return Left(fac(e.value));
-  }
-};
+export const mapLeft =
+  <A, B, C>(fac: (a: A) => C) =>
+    (e: Either<A, B>): Either<C, B> => {
+      switch (e.tag) {
+      case 'right':
+        return e;
+      default:
+        return Left(fac(e.value));
+      }
+    };
 
-export const fold = <A, B, C>(fac: (a: A) => C, fbc: (b: B) => C) => (e: Either<A, B>): C => {
-  switch(e.tag) {
-  case 'left':
-    return fac(e.value);
-  default:
-    return fbc(e.value);
-  }
-};
+export const fold =
+  <A, B, C>(fac: (a: A) => C, fbc: (b: B) => C) =>
+    (e: Either<A, B>): C => {
+      switch (e.tag) {
+      case 'left':
+        return fac(e.value);
+      default:
+        return fbc(e.value);
+      }
+    };
 
 export const swap = <A, B>(e: Either<A, B>): Either<B, A> => {
-  switch(e.tag) {
+  switch (e.tag) {
   case 'right':
     return Left(e.value);
   default:
@@ -53,7 +59,7 @@ export const swap = <A, B>(e: Either<A, B>): Either<B, A> => {
 };
 
 export const getLeft = <A, B>(e: Either<A, B>): Maybe<A> => {
-  switch(e.tag) {
+  switch (e.tag) {
   case 'left':
     return Just(e.value);
   case 'right':
@@ -62,7 +68,7 @@ export const getLeft = <A, B>(e: Either<A, B>): Maybe<A> => {
 };
 
 export const getRight = <A, B>(e: Either<A, B>): Maybe<B> => {
-  switch(e.tag) {
+  switch (e.tag) {
   case 'right':
     return Just(e.value);
   default:
@@ -71,7 +77,7 @@ export const getRight = <A, B>(e: Either<A, B>): Maybe<B> => {
 };
 
 export const toString = <A, B>(e: Either<A, B>): string => {
-  switch(e.tag) {
+  switch (e.tag) {
   case 'right':
     return `Right(${e.value})`;
   default:
@@ -80,7 +86,7 @@ export const toString = <A, B>(e: Either<A, B>): string => {
 };
 
 export const toResult = <A, B>(e: Either<A, B>): Result<A, B> => {
-  switch(e.tag) {
+  switch (e.tag) {
   case 'right':
     return Ok(e.value);
   default:
