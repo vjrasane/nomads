@@ -38,14 +38,19 @@ export const mapError =
       }
     };
 
+export type Fold<E, A, B> = {
+  ok: (a: A) => B,
+  err: (e: E) => B
+}
+
 export const fold =
-  <E, A, B>(feb: (e: E) => B, fab: (a: A) => B) =>
+  <E, A, B>(f: Fold<E, A, B>) =>
     (ra: Result<E, A>): B => {
       switch (ra.tag) {
       case 'ok':
-        return fab(ra.value);
+        return f.ok(ra.value);
       default:
-        return feb(ra.error);
+        return f.err(ra.error);
       }
     };
 

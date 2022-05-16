@@ -245,19 +245,19 @@ describe('Maybe', () => {
   describe('fold', () => {
     it('folds just value', () => {
       expect(
-        Just(42).fold(
-          () => 69,
-          (n) => n * 2
-        )
+        Just(42).fold({
+          nothing: () => 69,
+          just: (n) => n * 2
+        })
       ).toBe(84);
     });
 
     it('folds nothing value', () => {
       expect(
-        Nothing.fold(
-          () => 69,
-          (n) => n * 2
-        )
+        Nothing.fold({
+          nothing: () => 69,
+          just: (n) => n * 2
+        })
       ).toBe(69);
     });
   });
@@ -408,6 +408,82 @@ describe('Maybe', () => {
       }).maybe).toEqual({
         tag: 'nothing'
       });
+    });
+  });
+
+  describe('all', () => {
+    it('returns just for an array of justs', () => {
+      expect(Maybe.all([
+        Just(1), Just(2), Just(3)
+      ]).maybe).toEqual({
+        tag: 'just', value: [1,2,3]
+      });
+    });
+
+    it('returns nothing for an array with a single nothing', () => {
+      expect(Maybe.all([
+        Just(1), Nothing, Just(3)
+      ]).maybe).toEqual({
+        tag: 'nothing'
+      });
+    });
+
+    it('returns just of empty array for an empty array', () => {
+      expect(Maybe.all([]).maybe).toEqual({ tag: 'just', value: [] });
+    });
+  });
+
+  describe('some', () => {
+    it('returns just for an array of justs', () => {
+      expect(Maybe.some([
+        Just(1), Just(2), Just(3)
+      ]).maybe).toEqual({
+        tag: 'just', value: 1
+      });
+    });
+
+    it('returns nothing for an array of nothings', () => {
+      expect(Maybe.some([
+        Nothing, Nothing, Nothing
+      ]).maybe).toEqual({
+        tag: 'nothing'
+      });
+    });
+
+    it('returns just for an array with single just', () => {
+      expect(Maybe.some([
+        Nothing, Just(2), Nothing
+      ]).maybe).toEqual({
+        tag: 'just', value: 2
+      });
+    });
+
+    it('returns nothing for an empty array', () => {
+      expect(Maybe.some([]).maybe).toEqual({ tag: 'nothing' });
+    });
+  });
+
+  describe('values', () => {
+    it('returns values for an array of justs', () => {
+      expect(Maybe.values([
+        Just(1), Just(2), Just(3)
+      ])).toEqual([1, 2, 3]);
+    });
+
+    it('returns values for an array of with single nothing', () => {
+      expect(Maybe.values([
+        Just(1), Nothing, Just(3)
+      ])).toEqual([1, 3]);
+    });
+
+    it('returns empty array for an array of nothings', () => {
+      expect(Maybe.values([
+        Nothing, Nothing, Nothing
+      ])).toEqual([]);
+    });
+
+    it('returns empty array for an empty array', () => {
+      expect(Maybe.values([])).toEqual([]);
     });
   });
 });

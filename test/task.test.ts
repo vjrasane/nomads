@@ -193,10 +193,10 @@ describe('Task', () => {
       const result = await Task.resolve(42)
         .encase()
         .map((r) =>
-          r.fold(
-            () => 0,
-            (n) => n * 2
-          )
+          r.fold({ 
+            err: () => 0,
+            ok: (n) => n * 2
+          })
         )
         .fork();
       expect(result).toEqual(84);
@@ -206,10 +206,10 @@ describe('Task', () => {
       const result = await Task.reject('error')
         .encase()
         .map((r) =>
-          r.fold(
-            () => 0,
-            (n) => n * 2
-          )
+          r.fold({
+            err: () => 0,
+            ok: (n) => n * 2
+          })
         )
         .fork();
       expect(result).toEqual(0);
@@ -230,6 +230,37 @@ describe('Task', () => {
     it('unwraps mapped resolving promise', async () => {
       const task = Task.resolve(42).map((n) => n * 2).task;
       await expect(task.fork()).resolves.toBe(84);
+    });
+  });
+
+  describe('record', () => {
+    it('gets resolving task from record of resolving tasks', async () => {
+      const task = Task.record({
+        first: Task.resolve(1),
+        second: Task.resolve(2),
+        third: Task.resolve(3),
+      });
+      await expect(task.fork()).resolves.toEqual({
+        first: 1, second: 2, third: 3
+      });
+    });
+
+    it('gets rejecting task from record with single rejecting task', async () => {
+      const task = Task.record({
+        first: Task.resolve(1),
+        second: Task.reject('error'),
+        third: Task.resolve(3),
+      });
+      await expect(task.fork()).rejects.toBe('error');
+    });
+
+    it('rejects with the error from first rejecting task', async () => {
+      const task = Task.record({
+        first: Task.reject('first'),
+        second: Task.reject('second'),
+        third: Task.resolve('third'),
+      });
+      await expect(task.fork()).rejects.toBe('first');
     });
   });
 });

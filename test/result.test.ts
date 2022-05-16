@@ -123,18 +123,18 @@ describe('Result', () => {
 
   describe('fold', () => {
     it('folds ok value', () => {
-      const folded = Ok(42).fold(
-        () => 69,
-        (num) => num / 2
-      );
+      const folded = Ok(42).fold({
+        err: () => 69,
+        ok: (num) => num / 2
+      });
       expect(folded).toBe(21);
     });
 
     it('folds err value', () => {
-      const folded = Err('error').fold(
-        (err) => err.toUpperCase(),
-        () => 'str'
-      );
+      const folded = Err('error').fold({
+        err: (err) => err.toUpperCase(),
+        ok: () => 'str'
+      });
       expect(folded).toBe('ERROR');
     });
   });
@@ -365,6 +365,17 @@ describe('Result', () => {
       }).result).toEqual({
         tag: 'err',
         error: 'error'
+      });
+    });
+
+    it ('gets the error from the first error', () => {
+      expect(Result.record({
+        first:  Err('first'),
+        second: Err('second'),
+        third: Err('third')
+      }).result).toEqual({
+        tag: 'err',
+        error: 'first'
       });
     });
   });

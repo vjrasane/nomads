@@ -26,7 +26,7 @@ export class Either<A, B> {
 
   mapRight = <C>(fbc: (b: B) => C): Either<A, C> => this.apply(I.mapRight(fbc));
   mapLeft = <C>(fac: (a: A) => C): Either<C, B> => this.apply(I.mapLeft(fac));
-  fold = <C>(fac: (a: A) => C, fbc: (b: B) => C): C => I.fold(fac, fbc)(this.internal);
+  fold = <C>(f: I.Fold<A, B, C>): C => I.fold(f)(this.internal);
   toResult = (): Result<A, B> => I.toResult(this.internal);
   toTuple = (): Tuple<Maybe<A>, Maybe<B>> => I.toTuple(this.internal);
   get = (): A | B => this.value;
