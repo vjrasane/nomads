@@ -1,1 +1,1 @@
-export * from './src/monads/result/result.wrapper';
+export * from './src/monads/result';

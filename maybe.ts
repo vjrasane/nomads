@@ -1,1 +1,1 @@
-export * from './src/monads/maybe/maybe.wrapper';
+export * from './src/monads/maybe';
