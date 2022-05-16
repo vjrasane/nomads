@@ -379,4 +379,71 @@ describe('Result', () => {
       });
     });
   });
+
+  describe('all', () => {
+    it('gets ok from array of oks', () => {
+      expect(Result.all([Ok(1), Ok(2), Ok(3)]).result).toEqual({
+        tag: 'ok', value: [1, 2, 3]
+      });
+    });
+
+    it('gets err from array with single err', () => {
+      expect(Result.all([Ok(1), Err('error'), Ok(3)]).result).toEqual({
+        tag: 'err', error: 'error'
+      });
+    });
+
+    it('gets first error from array with multiple errors', () => {
+      expect(Result.all([Err('first'), Err('second'), Err('third')]).result).toEqual({
+        tag: 'err', error: 'first'
+      });
+    });
+
+    it('gets ok from empty array', () => {
+      expect(Result.all([]).result).toEqual({
+        tag: 'ok', value: []
+      });
+    });
+  });
+
+  describe('some', () => {
+    it('gets first error from array with errors', () => {
+      expect(
+        Result.some([Err('first'), Err('second'), Err('third')]).result
+      ).toEqual({ tag: 'err', error: 'first'});
+    });
+
+    it('gets ok from array with single ok', () => {
+      expect(
+        Result.some([Err('first'), Ok(2), Err('third')]).result
+      ).toEqual({ tag: 'ok', value: 2 });
+    });
+
+    it('gets first ok from array with multiple oks', () => {
+      expect(
+        Result.some([Ok(1), Ok(2), Ok(3)]).result
+      ).toEqual({ tag: 'ok', value: 1 });
+    });
+  });
+
+
+  describe('values', () => {
+    it('gets values from array with oks', () => {
+      expect(
+        Result.values([Ok(1), Ok(2), Ok(3)])
+      ).toEqual([1,2,3]);
+    });
+
+    it('gets oks from array with error', () => {
+      expect(
+        Result.values([Ok(1), Err('error'), Ok(3)])
+      ).toEqual([1, 3]);
+    });
+
+    it('gets empty array from empty array', () => {
+      expect(
+        Result.values([])
+      ).toEqual([]);
+    });
+  });
 });
