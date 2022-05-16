@@ -1,5 +1,5 @@
 import { Maybe } from '../maybe';
-import { applyTo, Err, join, Ok } from '../result';
+import { Result, Err, Ok } from '../result';
 
 describe('Result', () => {
   it('Ok', () => {
@@ -7,6 +7,7 @@ describe('Result', () => {
     expect(ok.result).toEqual({ tag: 'ok', value: 42 });
     expect(ok.value).toBe(42);
     expect(ok.error).toBe(undefined);
+    expect(ok.tag).toBe('ok');
     expect(ok.get()).toBe(42);
     expect(ok.getError().get()).toBe(undefined);
     expect(ok.getValue().get()).toBe(42);
@@ -17,6 +18,7 @@ describe('Result', () => {
     expect(err.result).toEqual({ tag: 'err', error: 'error' });
     expect(err.value).toBe(undefined);
     expect(err.error).toBe('error');
+    expect(err.tag).toBe('err');
     expect(err.get()).toBe(undefined);
     expect(err.getError().get()).toBe('error');
     expect(err.getValue().get()).toBe(undefined);
@@ -214,55 +216,55 @@ describe('Result', () => {
 
   describe('applyTo', () => {
     it('ok function applies to ok value', () => {
-      const applied = Ok((str: string) => parseInt(str, 10)).chain(applyTo(Ok('42')));
+      const applied = Ok((str: string) => parseInt(str, 10)).chain(Result.applyTo(Ok('42')));
       expect(applied.result).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('ok function applies to err', () => {
-      const applied = Ok((str: string) => parseInt(str, 10)).chain(applyTo(Err('error')));
+      const applied = Ok((str: string) => parseInt(str, 10)).chain(Result.applyTo(Err('error')));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('err applies to ok value', () => {
-      const applied = Err('error').chain(applyTo(Ok('42')));
+      const applied = Err('error').chain(Result.applyTo(Ok('42')));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('erro value applies to err', () => {
-      const applied = Err('error').chain(applyTo(Err('apply')));
+      const applied = Err('error').chain(Result.applyTo(Err('apply')));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('applies a curried function multiple times to ok values', () => {
       const applied = Ok((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(applyTo(Ok(1)))
-        .chain(applyTo(Ok(2)))
-        .chain(applyTo(Ok(3)));
+        .chain(Result.applyTo(Ok(1)))
+        .chain(Result.applyTo(Ok(2)))
+        .chain(Result.applyTo(Ok(3)));
       expect(applied.result).toEqual({ tag: 'ok', value: 6 });
     });
 
     it('applies a curried function multiple times to ok and err values', () => {
       const applied = Ok((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(applyTo(Ok(1)))
-        .chain(applyTo(Err('error')))
-        .chain(applyTo(Ok(3)));
+        .chain(Result.applyTo(Ok(1)))
+        .chain(Result.applyTo(Err('error')))
+        .chain(Result.applyTo(Ok(3)));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
   });
 
   describe('join', () => {
     it('joins nested ok values', () => {
-      const joined = join(Ok(Ok(42)));
+      const joined = Result.join(Ok(Ok(42)));
       expect(joined.result).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('joins nested ok and err values', () => {
-      const joined = join(Ok(Err('error')));
+      const joined = Result.join(Ok(Err('error')));
       expect(joined.result).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('joins nested err value', () => {
-      const joined = join(Err('error'));
+      const joined = Result.join(Err('error'));
       expect(joined.result).toEqual({ tag: 'err', error: 'error' });
     });
   });
@@ -336,6 +338,34 @@ describe('Result', () => {
       default:
         fail('should never enter the default case');
       }
+    });
+  });
+
+  describe('record', () => {
+    it('gets ok from a record of oks', () => {
+      expect(Result.record({
+        first: Ok(1),
+        second: Ok(2),
+        third: Ok(3)
+      }).result).toEqual({
+        tag: 'ok',
+        value: {
+          first: 1,
+          second: 2,
+          third: 3
+        }
+      });
+    });
+
+    it('gets error from a record with single error', () => {
+      expect(Result.record({
+        first: Ok(1),
+        second: Err('error'),
+        third: Ok(3)
+      }).result).toEqual({
+        tag: 'err',
+        error: 'error'
+      });
     });
   });
 });

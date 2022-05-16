@@ -1,6 +1,8 @@
 import { Maybe } from '../maybe';
 import * as I from './internal';
 
+type TypeOfRemoteData<R> = R extends RemoteData<any, infer T> ? T : never;
+
 export class RemoteData<E, A> {
   constructor(private readonly internal: I.RemoteData<E, A>) {}
 
@@ -32,6 +34,8 @@ export class RemoteData<E, A> {
   map = <B>(fab: (a: A) => B): RemoteData<E, B> => this.apply(I.map(fab));
   mapError = <B>(feb: (e: E) => B): RemoteData<B, A> => this.apply(I.mapError(feb));
   chain = <B>(fab: (a: A) => RemoteData<E, B>): RemoteData<E, B> => RemoteData.join(this.apply(I.map(fab)));
+  or = (ra: RemoteData<E, A>) => this.apply(I.orElse(ra.internal));
+  orElse = (ra: RemoteData<E, A>) => this.apply(I.or(ra.internal));
   default = (a: A): RemoteData<E, A> => this.apply(I.defaultTo(a));
   toMaybe = (): Maybe<A> => this.getData();
   get = (): A | undefined => this.data;
@@ -39,8 +43,6 @@ export class RemoteData<E, A> {
   getData = (): Maybe<A> => I.getData(this.internal);
   getError = (): Maybe<E> => I.getError(this.internal);
   toString = (): string => I.toString(this.internal);
-  // orElse = (ra: RemoteData<E, A>) => this.apply(I.or(ra.internal));
-  // default = (a: A): RemoteData<E, A> => this.apply(I.defaultTo(a));
 
   static join = <E, A>(r: RemoteData<E, RemoteData<E, A>>): RemoteData<E, A> => {
     switch (r.internal.tag) {
@@ -50,8 +52,15 @@ export class RemoteData<E, A> {
       return new RemoteData(r.internal);
     }
   };
+
+  static record = <R extends Record<string, RemoteData<E, any>>, E = any>(record: R): RemoteData<E, { [P in keyof R]: TypeOfRemoteData<R[P]> }> => {
+    return Object.entries(record).reduce((acc, [key, value]): RemoteData<E, Partial<{ [P in keyof R]: TypeOfRemoteData<R[P]> }>> => {
+      return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
+    }, Success({})) as unknown as RemoteData<E, { [P in keyof R]: TypeOfRemoteData<R[P]> }>;
+  };
 }
 
+export const record = RemoteData.record;
 export const from = RemoteData.from;
 export const join = RemoteData.join;
 export const Success = RemoteData.Success;

@@ -1,5 +1,6 @@
 import { Result } from '../result';
 import { Maybe } from '../maybe';
+import { Tuple } from '../tuple';
 import * as I from './internal';
 
 export class Either<A, B> {
@@ -27,6 +28,7 @@ export class Either<A, B> {
   mapLeft = <C>(fac: (a: A) => C): Either<C, B> => this.apply(I.mapLeft(fac));
   fold = <C>(fac: (a: A) => C, fbc: (b: B) => C): C => I.fold(fac, fbc)(this.internal);
   toResult = (): Result<A, B> => I.toResult(this.internal);
+  toTuple = (): Tuple<Maybe<A>, Maybe<B>> => I.toTuple(this.internal);
   get = (): A | B => this.value;
   getLeft = (): Maybe<A> => I.getLeft(this.internal);
   getRight = (): Maybe<B> => I.getRight(this.internal);

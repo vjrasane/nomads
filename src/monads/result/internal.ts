@@ -52,11 +52,11 @@ export const fold =
 export const or =
   <E, A>(first: Result<E, A>) =>
     (second: Result<E, A>): Result<E, A> => {
-      switch (first.tag) {
+      switch (second.tag) {
       case 'ok':
-        return first;
+        return first.tag === 'ok' ? first : second;
       default:
-        return mapError<E, A, E>(() => first.error)(second);
+        return first;
       }
     };
 

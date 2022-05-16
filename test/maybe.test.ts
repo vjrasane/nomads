@@ -383,4 +383,31 @@ describe('Maybe', () => {
       expect(Maybe.from({ tag: 'nothing' }).maybe).toEqual({ tag: 'nothing' });
     });
   });
+
+  describe('record', () => {
+    it('gets just from a record of justs', () => {
+      expect(Maybe.record({
+        first: Just(1),
+        second: Just(2),
+        third: Just(3)
+      }).maybe).toEqual({
+        tag: 'just',
+        value: {
+          first: 1,
+          second: 2,
+          third: 3
+        }
+      });
+    });
+
+    it('gets nothing from a record with single nothing', () => {
+      expect(Maybe.record({
+        first: Just(1),
+        second: Nothing,
+        third: Just(3)
+      }).maybe).toEqual({
+        tag: 'nothing'
+      });
+    });
+  });
 });

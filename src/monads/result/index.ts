@@ -2,6 +2,8 @@ import { Either } from '../either';
 import { Maybe } from '../maybe';
 import * as I from './internal';
 
+type TypeOfResult<R> = R extends Result<any, infer T> ? T : never;
+
 export class Result<E, A> {
   private constructor(private readonly internal: I.Result<E, A>) {}
 
@@ -55,8 +57,15 @@ export class Result<E, A> {
     <A, B, E>(r: Result<E, A>) =>
     (f: (a: A) => B): Result<E, B> =>
       r.map(f);
+  
+  static record = <R extends Record<string, Result<E, any>>, E = any>(record: R): Result<E, { [P in keyof R]: TypeOfResult<R[P]> }> => {
+    return Object.entries(record).reduce((acc, [key, value]): Result<E, Partial<{ [P in keyof R]: TypeOfResult<R[P]> }>> => {
+      return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
+    }, Ok({})) as unknown as Result<E, { [P in keyof R]: TypeOfResult<R[P]> }>;
+  };
 }
 
+export const record = Result.record;
 export const from = Result.from;
 export const join = Result.join;
 export const applyTo = Result.applyTo;
