@@ -48,10 +48,7 @@ export class Maybe<A> {
     }
   };
 
-  static applyTo =
-    <A, B>(m: Maybe<A>) =>
-    (f: (a: A) => B): Maybe<B> =>
-      m.map(f);
+  static applyTo = <A, B>(m: Maybe<A>) => (f: (a: A) => B): Maybe<B> => m.map(f);
   static fromOptional = <A>(a: A | undefined): Maybe<A> => Maybe.from(I.fromOptional(a));
   static fromNullable = <A>(a: A | null | undefined): Maybe<A> => Maybe.from(I.fromNullable(a));
   static fromNumber = (a: number): Maybe<number> => Maybe.from(I.fromNumber(a));
