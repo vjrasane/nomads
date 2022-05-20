@@ -486,4 +486,92 @@ describe('Maybe', () => {
       expect(Maybe.values([])).toEqual([]);
     });
   });
+
+  describe('parseInt', () => {
+    it('empty string returns nothing', () => {
+      expect(Maybe.parseInt('').maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('arbitrary string returns nothing', () => {
+      expect(Maybe.parseInt('not really a number').maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('positive integer string returns just', () => {
+      expect(Maybe.parseInt('42').maybe).toEqual({ tag: 'just', value: 42 });
+    });
+
+    it('negative integer string returns just', () => {
+      expect(Maybe.parseInt('-42').maybe).toEqual({ tag: 'just', value: -42 });
+    });
+
+    it('positive float string returns just integer', () => {
+      expect(Maybe.parseInt('4.2').maybe).toEqual({ tag: 'just', value: 4 });
+    });
+
+    it('negative float string returns just integer', () => {
+      expect(Maybe.parseInt('-4.2').maybe).toEqual({ tag: 'just', value: -4 });
+    });
+
+    it('number with trailing arbitraty string returns nothing', () => {
+      expect(Maybe.parseInt('42notstring').maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('float string with no leading zero return just zero', () => {
+      expect(Maybe.parseInt('.42').maybe).toEqual({ tag: 'just', value: 0 });
+    });
+  });
+
+  describe('parseFloat', () => {
+    it('empty string returns nothing', () => {
+      expect(Maybe.parseFloat('').maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('arbitrary string returns nothing', () => {
+      expect(Maybe.parseFloat('not really a number').maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('positive integer string returns just', () => {
+      expect(Maybe.parseFloat('42').maybe).toEqual({ tag: 'just', value: 42 });
+    });
+
+    it('negative integer string returns just', () => {
+      expect(Maybe.parseFloat('-42').maybe).toEqual({ tag: 'just', value: -42 });
+    });
+
+    it('positive float string returns just', () => {
+      expect(Maybe.parseFloat('4.2').maybe).toEqual({ tag: 'just', value: 4.2 });
+    });
+
+    it('negative float string returns just', () => {
+      expect(Maybe.parseFloat('-4.2').maybe).toEqual({ tag: 'just', value: -4.2 });
+    });
+
+    it('number with trailing arbitraty string returns nothing', () => {
+      expect(Maybe.parseFloat('42notstring').maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('float string with no leading zero return just', () => {
+      expect(Maybe.parseFloat('.42').maybe).toEqual({ tag: 'just', value: 0.42 });
+    });
+  });
+
+  describe('find', () => {
+    it('finds matching value', () => {
+      expect(Maybe.find(n => n === 2, [1,2,3]).maybe).toEqual({
+        tag: 'just', value: 2
+      });
+    });
+
+    it('returns nothing for no matches', () => {
+      expect(Maybe.find(n => n === -1, [1,2,3]).maybe).toEqual({
+        tag: 'nothing'
+      });
+    });
+
+    it('returns nothing for empty array', () => {
+      expect(Maybe.find(n => n === 2, []).maybe).toEqual({
+        tag: 'nothing'
+      });
+    });
+  });
 });

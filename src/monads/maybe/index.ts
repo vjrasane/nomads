@@ -36,6 +36,9 @@ export class Maybe<A> {
   getOrElse = (def: A) => I.getOrElse(def)(this.internal);
   toString = (): string => I.toString(this.internal);
 
+  concatTo = <T>(arr: Array<T | A>): Array<T | A> => this.map((a): Array<T | A> => [a, ...arr]).getOrElse(arr);
+  appendTo = <T>(arr: Array<T | A>): Array<T | A> => this.map((a): Array<T | A> => [...arr, a]).getOrElse(arr);
+
   static join = <A>(m: Maybe<Maybe<A>>): Maybe<A> => {
     switch (m.internal.tag) {
     case 'just':
@@ -55,6 +58,9 @@ export class Maybe<A> {
   static nth = <A>(index: number, arr: Array<A>): Maybe<A> => Maybe.from(I.nth(index, arr));
   static first = <A>(arr: Array<A>): Maybe<A> => Maybe.from(I.first(arr));
   static last = <A>(arr: Array<A>): Maybe<A> => Maybe.from(I.last(arr));
+  static find = <A>(f: (a: A) => boolean, arr: Array<A>): Maybe<A> => Maybe.from(I.find(f)(arr));
+  static parseInt = (str: string): Maybe<number> => fromNumber(Number.parseInt(`${Number(str || 'NaN')}`));
+  static parseFloat = (str: string): Maybe<number> => fromNumber(Number.parseFloat(`${Number(str || 'NaN')}`));
 
   static all = <A extends Array<Maybe<any>>>(arr: A): Maybe<{ [P in keyof A]: TypeOfMaybe<A[P]> }> => {
     return arr.reduce((acc, curr): Maybe<Partial<{ [P in keyof A]: TypeOfMaybe<A[P]> }>> => acc.chain(
@@ -98,3 +104,6 @@ export const record = Maybe.record;
 export const some = Maybe.some;
 export const all = Maybe.all;
 export const values = Maybe.values;
+export const find = Maybe.find;
+export const parseInt = Maybe.parseInt;
+export const parseFloat = Maybe.parseFloat;

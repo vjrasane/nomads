@@ -5,6 +5,7 @@ describe('Either', () => {
     const left = Left(42);
     expect(left.either).toEqual({ tag: 'left', value: 42 });
     expect(left.tag).toEqual('left');
+    expect(left.get()).toEqual(42);
     expect(left.value).toEqual(42);
     expect(left.getLeft().get()).toEqual(42);
     expect(left.getRight().get()).toEqual(undefined);
@@ -14,6 +15,7 @@ describe('Either', () => {
     const right = Right(42);
     expect(right.either).toEqual({ tag: 'right', value: 42 });
     expect(right.tag).toEqual('right');
+    expect(right.get()).toEqual(42);
     expect(right.value).toEqual(42);
     expect(right.getLeft().get()).toEqual(undefined);
     expect(right.getRight().get()).toEqual(42);
