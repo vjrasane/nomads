@@ -1,6 +1,6 @@
 {
   "name": "nomads",
-  "version": "0.0.13-alpha",
+  "version": "0.0.13-beta",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": "https://github.com/vjrasane/nomads.git",
