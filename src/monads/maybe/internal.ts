@@ -155,4 +155,4 @@ export const first = <A>(arr: Array<A>): Maybe<A> => nth(0, arr);
 
 export const last = <A>(arr: Array<A>): Maybe<A> => nth(arr.length - 1, arr);
 
-export const find = <A>(f: (a: A) => boolean) => (arr: Array<A>): Maybe<A> => fromOptional(arr.find(f));
+export const find = <A, T extends readonly A[]>(f: (a: A) => boolean) => (arr: T): Maybe<A> => fromOptional(arr.find(f));

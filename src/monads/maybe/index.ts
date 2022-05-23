@@ -1,8 +1,7 @@
 import { Result } from '../result';
 import * as I from './internal';
 
-type TypeOfMaybe<M> = M extends Maybe<infer T> ? T : never;
-
+type MaybeType<M> = M extends Maybe<infer T> ? T : never;
 export class Maybe<A> {
   private constructor(private readonly internal: I.Maybe<A>) {}
 
@@ -55,35 +54,40 @@ export class Maybe<A> {
   static nth = <A>(index: number, arr: Array<A>): Maybe<A> => Maybe.from(I.nth(index, arr));
   static first = <A>(arr: Array<A>): Maybe<A> => Maybe.from(I.first(arr));
   static last = <A>(arr: Array<A>): Maybe<A> => Maybe.from(I.last(arr));
-  static find = <A>(f: (a: A) => boolean, arr: Array<A>): Maybe<A> => Maybe.from(I.find(f)(arr));
+  static find = <A, T extends readonly A[]>(f: (a: A) => boolean, arr: T): Maybe<A> => Maybe.from(I.find(f)(arr));
   static parseInt = (str: string): Maybe<number> => fromNumber(Number.parseInt(`${Number(str || 'NaN')}`));
   static parseFloat = (str: string): Maybe<number> => fromNumber(Number.parseFloat(`${Number(str || 'NaN')}`));
 
-  static all = <A extends Array<Maybe<any>>>(arr: A): Maybe<{ [P in keyof A]: TypeOfMaybe<A[P]> }> => {
-    return arr.reduce((acc, curr): Maybe<Partial<{ [P in keyof A]: TypeOfMaybe<A[P]> }>> => acc.chain(
-      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: TypeOfMaybe<A[P]> }>)
-    ), Just([]));
+  static all = <T extends readonly Maybe<any>[] | []>(arr: T): Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }> => {
+    return (arr as readonly Maybe<any>[]).reduce(
+      (acc: Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }>, curr): Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }> => {
+        return acc.chain(
+          a => curr.map((v) => [...(a as readonly unknown[]), v ] as unknown as { -readonly [P in keyof T]: MaybeType<T[P]> })
+        );
+      }, Just([] as unknown as { -readonly [P in keyof T]: MaybeType<T[P]> })) as Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }>;
   };
 
-  static some = <A extends Array<Maybe<any>>>(arr: A): Maybe<TypeOfMaybe<A[number]>> => {
-    return arr.reduce((acc, curr): Maybe<TypeOfMaybe<A[number]>> => 
+  static some = <A extends Array<Maybe<any>>>(arr: A): Maybe<MaybeType<A[number]>> => {
+    return arr.reduce((acc, curr): Maybe<MaybeType<A[number]>> => 
       acc.or(curr)
     , Nothing);
   };
 
-  static values = <A extends Array<Maybe<any>>>(arr: A): Array<TypeOfMaybe<A[number]>> => {
-    return arr.reduce((acc: Array<TypeOfMaybe<A[number]>>, curr: A[number]): Array<TypeOfMaybe<A[number]>> => 
-      curr.fold<Array<TypeOfMaybe<A[number]>>>({
+  static values = <A extends Array<Maybe<any>>>(arr: A): Array<MaybeType<A[number]>> => {
+    return arr.reduce((acc: Array<MaybeType<A[number]>>, curr: A[number]): Array<MaybeType<A[number]>> => 
+      curr.fold<Array<MaybeType<A[number]>>>({
         nothing: () => acc,
         just: v => [...acc, v]
       }), []);
   };
 
-  static record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<{ [P in keyof R]: TypeOfMaybe<R[P]> }> => {
-    return Object.entries(record).reduce((acc, [key, value]): Maybe<Partial<{ [P in keyof R]: TypeOfMaybe<R[P]> }>> => {
+  static record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<{ -readonly [P in keyof R]: MaybeType<R[P]> }> => {
+    return Object.entries(record).reduce((acc, [key, value]): Maybe<Partial<{ [P in keyof R]: MaybeType<R[P]> }>> => {
       return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
-    }, Just({})) as unknown as Maybe<{ [P in keyof R]: TypeOfMaybe<R[P]> }>;
+    }, Just({})) as unknown as Maybe<{ [P in keyof R]: MaybeType<R[P]> }>;
   };
+
+  static array = Maybe.all;
 }
 
 export const Just = Maybe.Just;
@@ -98,6 +102,7 @@ export const first = Maybe.first;
 export const last = Maybe.last;
 export const join = Maybe.join;
 export const record = Maybe.record;
+export const array = Maybe.array;
 export const some = Maybe.some;
 export const all = Maybe.all;
 export const values = Maybe.values;

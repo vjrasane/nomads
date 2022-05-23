@@ -2,7 +2,7 @@ import { Maybe } from '../maybe';
 import { NonEmptyArray } from '../non-empty-array';
 import * as I from './internal';
 
-type TypeOfRemoteData<R> = R extends RemoteData<any, infer T> ? T : never;
+type RemoteDataType<R> = R extends RemoteData<any, infer T> ? T : never;
 
 export class RemoteData<E, A> {
   constructor(private readonly internal: I.RemoteData<E, A>) {}
@@ -55,19 +55,19 @@ export class RemoteData<E, A> {
     }
   };
 
-  static all = <A extends Array<RemoteData<E, any>>, E = any>(arr: A): RemoteData<E, { [P in keyof A]: TypeOfRemoteData<A[P]> }> => {
-    return arr.reduce((acc, curr): RemoteData<E, Partial<{ [P in keyof A]: TypeOfRemoteData<A[P]> }>> => acc.chain(
-      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: TypeOfRemoteData<A[P]> }>)
+  static all = <A extends Array<RemoteData<E, any>>, E = any>(arr: A): RemoteData<E, { [P in keyof A]: RemoteDataType<A[P]> }> => {
+    return arr.reduce((acc, curr): RemoteData<E, Partial<{ [P in keyof A]: RemoteDataType<A[P]> }>> => acc.chain(
+      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: RemoteDataType<A[P]> }>)
     ), Success([]));
   };
     
-  static some = <A extends NonEmptyArray<RemoteData<E, any>>, E = any>(arr: A): RemoteData<E, TypeOfRemoteData<A[number]>> => {
-    return arr.reduce((acc, curr): RemoteData<E, TypeOfRemoteData<A[number]>> => acc.or(curr));
+  static some = <A extends NonEmptyArray<RemoteData<E, any>>, E = any>(arr: A): RemoteData<E, RemoteDataType<A[number]>> => {
+    return arr.reduce((acc, curr): RemoteData<E, RemoteDataType<A[number]>> => acc.or(curr));
   };
     
-  static values = <A extends Array<RemoteData<E, any>>, E = any>(arr: A): Array<TypeOfRemoteData<A[number]>> => {
-    return arr.reduce((acc: Array<TypeOfRemoteData<A[number]>>, curr: A[number]): Array<TypeOfRemoteData<A[number]>> => 
-      curr.fold<Array<TypeOfRemoteData<A[number]>>>(
+  static values = <A extends Array<RemoteData<E, any>>, E = any>(arr: A): Array<RemoteDataType<A[number]>> => {
+    return arr.reduce((acc: Array<RemoteDataType<A[number]>>, curr: A[number]): Array<RemoteDataType<A[number]>> => 
+      curr.fold<Array<RemoteDataType<A[number]>>>(
         {
           'stand by': () => acc,
           loading: () => acc,
@@ -78,10 +78,10 @@ export class RemoteData<E, A> {
     , []);
   };
 
-  static record = <R extends Record<string, RemoteData<E, any>>, E = any>(record: R): RemoteData<E, { [P in keyof R]: TypeOfRemoteData<R[P]> }> => {
-    return Object.entries(record).reduce((acc, [key, value]): RemoteData<E, Partial<{ [P in keyof R]: TypeOfRemoteData<R[P]> }>> => {
+  static record = <R extends Record<string, RemoteData<E, any>>, E = any>(record: R): RemoteData<E, { [P in keyof R]: RemoteDataType<R[P]> }> => {
+    return Object.entries(record).reduce((acc, [key, value]): RemoteData<E, Partial<{ [P in keyof R]: RemoteDataType<R[P]> }>> => {
       return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
-    }, Success({})) as unknown as RemoteData<E, { [P in keyof R]: TypeOfRemoteData<R[P]> }>;
+    }, Success({})) as unknown as RemoteData<E, { [P in keyof R]: RemoteDataType<R[P]> }>;
   };
 }
 
