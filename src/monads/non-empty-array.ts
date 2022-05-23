@@ -1,5 +1,3 @@
-
-
 export type NonEmptyArray<T> = [T, ...T[]];
 
 export const map = <A, B>(fab: (a: A) => B) => ([a, ...rest]: NonEmptyArray<A>): NonEmptyArray<B> => {

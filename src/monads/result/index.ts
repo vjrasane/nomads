@@ -3,7 +3,7 @@ import { Maybe } from '../maybe';
 import { NonEmptyArray } from '../non-empty-array';
 import * as I from './internal';
 
-type TypeOfResult<R> = R extends Result<any, infer T> ? T : never;
+type ResultType<R> = R extends Result<any, infer T> ? T : never;
 
 export class Result<E, A> {
   private constructor(private readonly internal: I.Result<E, A>) {}
@@ -59,29 +59,29 @@ export class Result<E, A> {
     (f: (a: A) => B): Result<E, B> =>
       r.map(f);
 
-  static all = <A extends Array<Result<E, any>>, E = any>(arr: A): Result<E, { [P in keyof A]: TypeOfResult<A[P]> }> => {
-    return arr.reduce((acc, curr): Result<E, Partial<{ [P in keyof A]: TypeOfResult<A[P]> }>> => acc.chain(
-      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: TypeOfResult<A[P]> }>)
+  static all = <A extends Array<Result<E, any>>, E = any>(arr: A): Result<E, { [P in keyof A]: ResultType<A[P]> }> => {
+    return arr.reduce((acc, curr): Result<E, Partial<{ [P in keyof A]: ResultType<A[P]> }>> => acc.chain(
+      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: ResultType<A[P]> }>)
     ), Ok([]));
   };
     
-  static some = <A extends NonEmptyArray<Result<E, any>>, E = any>(arr: A): Result<E, TypeOfResult<A[number]>> => {
-    return arr.reduce((acc, curr): Result<E, TypeOfResult<A[number]>> => acc.or(curr));
+  static some = <A extends NonEmptyArray<Result<E, any>>, E = any>(arr: A): Result<E, ResultType<A[number]>> => {
+    return arr.reduce((acc, curr): Result<E, ResultType<A[number]>> => acc.or(curr));
   };
     
-  static values = <A extends Array<Result<E, any>>, E = any>(arr: A): Array<TypeOfResult<A[number]>> => {
-    return arr.reduce((acc: Array<TypeOfResult<A[number]>>, curr: A[number]): Array<TypeOfResult<A[number]>> => 
-      curr.fold<Array<TypeOfResult<A[number]>>>({
+  static values = <A extends Array<Result<E, any>>, E = any>(arr: A): Array<ResultType<A[number]>> => {
+    return arr.reduce((acc: Array<ResultType<A[number]>>, curr: A[number]): Array<ResultType<A[number]>> => 
+      curr.fold<Array<ResultType<A[number]>>>({
         err: () => acc,
         ok: v => [...acc, v]
       })
     , []);
   };
   
-  static record = <R extends Record<string, Result<E, any>>, E = any>(record: R): Result<E, { [P in keyof R]: TypeOfResult<R[P]> }> => {
-    return Object.entries(record).reduce((acc, [key, value]): Result<E, Partial<{ [P in keyof R]: TypeOfResult<R[P]> }>> => {
+  static record = <R extends Record<string, Result<E, any>>, E = any>(record: R): Result<E, { [P in keyof R]: ResultType<R[P]> }> => {
+    return Object.entries(record).reduce((acc, [key, value]): Result<E, Partial<{ [P in keyof R]: ResultType<R[P]> }>> => {
       return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
-    }, Ok({})) as unknown as Result<E, { [P in keyof R]: TypeOfResult<R[P]> }>;
+    }, Ok({})) as unknown as Result<E, { [P in keyof R]: ResultType<R[P]> }>;
   };
 }
 

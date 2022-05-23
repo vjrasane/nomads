@@ -2,7 +2,7 @@ import { Result } from '../result';
 import * as P from '../promise';
 import * as I from './internal';
 
-type TypeOfTask<T> = T extends Task<infer A> ? A : never;
+type TaskType<T> = T extends Task<infer A> ? A : never;
 
 export class Task<A> {
   private constructor(private readonly internal: I.Task<A>) {}
@@ -29,14 +29,14 @@ export class Task<A> {
   static resolve = <A>(value: A): Task<A> => Task.of(() => Promise.resolve(value));
   static join = <A>(t: Task<Task<A>>): Task<A> => Task.of(() => t.fork().then((t) => t.fork()));
 
-  static record = <R extends Record<string, Task<any>>>(record: R): Task<{ [P in keyof R]: TypeOfTask<R[P]> }> => 
-    Task.of((): Promise<{ [P in keyof R]: TypeOfTask<R[P]> }> => 
+  static record = <R extends Record<string, Task<any>>>(record: R): Task<{ [P in keyof R]: TaskType<R[P]> }> => 
+    Task.of((): Promise<{ [P in keyof R]: TaskType<R[P]> }> => 
        P.record(
         Object.entries(record).reduce(
-          (acc, [key, value]): Partial<{ [P in keyof R]: Promise<TypeOfTask<R[P]>> }> => ({
+          (acc, [key, value]): Partial<{ [P in keyof R]: Promise<TaskType<R[P]>> }> => ({
             ...acc, [key]: value.fork()
-          }), {})  as { [P in keyof R]: Promise<TypeOfTask<R[P]>> }
-       ) as Promise<{ [P in keyof R]: TypeOfTask<R[P]> }>
+          }), {})  as { [P in keyof R]: Promise<TaskType<R[P]>> }
+       ) as Promise<{ [P in keyof R]: TaskType<R[P]> }>
     );
 }
 

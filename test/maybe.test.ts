@@ -431,6 +431,39 @@ describe('Maybe', () => {
     it('returns just of empty array for an empty array', () => {
       expect(Maybe.all([]).maybe).toEqual({ tag: 'just', value: [] });
     });
+
+    it('test typing', () => {
+      const [num, bool, string] = Maybe.all([Just(42), Just(true), Just('str')]).getOrElse([0, false,'']);
+      expect([num, bool, string]).toEqual([42, true, 'str']);
+    });
+  });
+
+
+  describe('array', () => {
+    it('returns just for an array of justs', () => {
+      expect(Maybe.array([
+        Just(1), Just(2), Just(3)
+      ]).maybe).toEqual({
+        tag: 'just', value: [1,2,3]
+      });
+    });
+
+    it('returns nothing for an array with a single nothing', () => {
+      expect(Maybe.array([
+        Just(1), Nothing, Just(3)
+      ]).maybe).toEqual({
+        tag: 'nothing'
+      });
+    });
+
+    it('returns just of empty array for an empty array', () => {
+      expect(Maybe.array([]).maybe).toEqual({ tag: 'just', value: [] });
+    });
+
+    it('test typing', () => {
+      const [num, bool, string] = Maybe.array([Just(42), Just(true), Just('str')]).getOrElse([0, false,'']);
+      expect([num, bool, string]).toEqual([42, true, 'str']);
+    });
   });
 
   describe('some', () => {
@@ -572,6 +605,26 @@ describe('Maybe', () => {
       expect(Maybe.find(n => n === 2, []).maybe).toEqual({
         tag: 'nothing'
       });
+    });
+  });
+
+  describe('concatTo', () => {
+    it('concats just value', () => {
+      expect(Just(42).concatTo([1,2,3])).toEqual([42, 1, 2, 3]);
+    });
+
+    it('concats nothing value', () => {
+      expect(Nothing.concatTo([1,2,3])).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('appendTo', () => {
+    it('appends just value', () => {
+      expect(Just(42).appendTo([1,2,3])).toEqual([1, 2, 3, 42]);
+    });
+
+    it('appends nothing value', () => {
+      expect(Nothing.appendTo([1,2,3])).toEqual([1, 2, 3]);
     });
   });
 });
