@@ -1,8 +1,34 @@
-import { Result } from '../../../result';
-import * as P from '../promise';
-import * as I from './internal';
+import { Result, Ok, Err } from './result';
+
+namespace I {
+  export type Task<E, A> = () => Promise<Result<E, A>>;
+
+  export const Task = <A>(f: () => Promise<A>): Task<any, A> => () => f().then(Ok).catch(Err);
+
+  export const map = <A, B, E>(fab: (a: A) => B) => (t: Task<E, A>): Task<E, B> => () => t().then(r => r.map(fab));
+
+  export const mapError = <A, E, F>(feb: (e: E) => F) => (t: Task<E, A>): Task<F, A> => () => t().then(r => r.mapError(feb));
+}
 
 type TaskType<T> = T extends Task<any, infer A> ? A : never;
+
+const mapValues = <K extends symbol | string | number, R extends Record<K, unknown>, B>(
+  mapper: (value: R[keyof R]) => B, 
+  record: R): { [P in keyof R]: B } => Object.entries(record).reduce(
+    (acc, [key, value]): Partial<{ [P in keyof R]: B }> => ({
+      ...acc, [key]: mapper(value as R[keyof R])
+    }), {})  as { [P in keyof R]: B };
+
+
+const promiseRecord = <R extends Record<string, Promise<any>>>(record: R): Promise<{ [P in keyof R]: Awaited<R[P]> }> => 
+  Promise.all(Object.entries(record)
+    .map(async ([key, value]) => [key, await value]))
+    .then(entries => entries.reduce(
+      (acc, [key, value]): Partial<{ [P in keyof R]: Awaited<R[P]> }> => ({
+        ...acc, [key]: value
+      }), {}
+    ) as { [P in keyof R]: Awaited<R[P]> });
+
 
 export class Task<E, A> {
   private constructor(private readonly internal: I.Task<E, A>) {}
@@ -46,11 +72,8 @@ export class Task<E, A> {
 
   static record = <R extends Record<string, Task<E, any>>, E = any>(record: R): Task<E, { -readonly [P in keyof R]: TaskType<R[P]> }> => 
     Task.from(
-      () => P.record(
-        Object.entries(record).reduce(
-          (acc, [key, value]): Partial<{ [P in keyof R]: Promise<Result<E, TaskType<R[P]>>> }> => ({
-            ...acc, [key]: value.fork()
-          }), {})  as { [P in keyof R]: Promise<Result<E, TaskType<R[P]>>> }
+      () => promiseRecord(
+        mapValues((value) => value.fork(), record)
       ).then(Result.record) as Promise<Result<E, { [P in keyof R]: TaskType<R[P]> }>>
     );
 }

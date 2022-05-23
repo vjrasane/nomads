@@ -31,12 +31,8 @@
   "dependencies": {},
   "files": [
     "*.js",
-    "*.ts",
     "*.d.ts",
-    "*.d.ts.map",
-    "src/**/*.ts",
     "src/**/*.d.ts",
-    "src/**/*.d.ts.map",
     "src/**/*.js",
     "docs/**/*.md",
     "README.md"
