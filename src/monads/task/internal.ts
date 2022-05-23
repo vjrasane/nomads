@@ -1,21 +1,9 @@
 import { Result, Ok, Err } from '../../../result';
 
-export type Task<A> = {
-  readonly tag: 'task';
-  readonly fork: () => Promise<A>;
-};
+export type Task<E, A> = () => Promise<Result<E, A>>;
 
-export const Task = <A>(fork: () => Promise<A>): Task<A> => ({
-  tag: 'task',
-  fork,
-});
+export const Task = <A>(f: () => Promise<A>): Task<any, A> => () => f().then(Ok).catch(Err);
 
-export const fork = <A>(t: Task<A>): Promise<A> => t.fork();
+export const map = <A, B, E>(fab: (a: A) => B) => (t: Task<E, A>): Task<E, B> => () => t().then(r => r.map(fab));
 
-export const map =
-  <A, B>(fab: (a: A) => B) =>
-    (t: Task<A>): Task<B> =>
-      Task(() => fork(t).then(fab));
-
-export const encase = <A>(t: Task<A>): Task<Result<any, A>> =>
-  Task(() => fork(t).then(Ok).catch(Err));
+export const mapError = <A, E, F>(feb: (e: E) => F) => (t: Task<E, A>): Task<F, A> => () => t().then(r => r.mapError(feb));

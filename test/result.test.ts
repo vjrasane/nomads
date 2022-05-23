@@ -404,6 +404,47 @@ describe('Result', () => {
         tag: 'ok', value: []
       });
     });
+
+    it('test typings', () => {
+      const [num, bool, str] = Result.all([
+        Ok(42), Ok(true), Ok('str')
+      ]).getOrElse([0, false, '']);
+      expect([num, bool, str]).toEqual([42, true, 'str']);
+    });
+  });
+
+
+  describe('array', () => {
+    it('gets ok from array of oks', () => {
+      expect(Result.array([Ok(1), Ok(2), Ok(3)]).result).toEqual({
+        tag: 'ok', value: [1, 2, 3]
+      });
+    });
+
+    it('gets err from array with single err', () => {
+      expect(Result.array([Ok(1), Err('error'), Ok(3)]).result).toEqual({
+        tag: 'err', error: 'error'
+      });
+    });
+
+    it('gets first error from array with multiple errors', () => {
+      expect(Result.array([Err('first'), Err('second'), Err('third')]).result).toEqual({
+        tag: 'err', error: 'first'
+      });
+    });
+
+    it('gets ok from empty array', () => {
+      expect(Result.array([]).result).toEqual({
+        tag: 'ok', value: []
+      });
+    });
+
+    it('test typings', () => {
+      const [num, bool, str] = Result.array([
+        Ok(42), Ok(true), Ok('str')
+      ]).getOrElse([0, false, '']);
+      expect([num, bool, str]).toEqual([42, true, 'str']);
+    });
   });
 
   describe('some', () => {
