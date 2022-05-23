@@ -1,4 +1,4 @@
-import { Iso } from '../src/optics/iso';
+import { Iso } from '../optics/iso';
 
 describe('Iso', () => {
   it('get', () => {

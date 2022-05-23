@@ -1,6 +1,6 @@
 /* BETA */
 
-import { Tuple } from '../monads/tuple';
+import { Tuple } from '../tuple';
 
 export interface Lens<A, B> {
   readonly get: (a: A) => B;

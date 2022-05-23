@@ -1,4 +1,4 @@
-import { Tuple } from '../src/monads/tuple';
+import { Tuple } from '../tuple';
 
 describe('Tuple', () => {
   it ('tags', () => {
