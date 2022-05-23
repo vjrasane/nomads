@@ -1,46 +1,63 @@
-import { Result } from '../result';
+import { Result } from '../../../result';
 import * as P from '../promise';
 import * as I from './internal';
 
-type TaskType<T> = T extends Task<infer A> ? A : never;
+type TaskType<T> = T extends Task<any, infer A> ? A : never;
 
-export class Task<A> {
-  private constructor(private readonly internal: I.Task<A>) {}
+export class Task<E, A> {
+  private constructor(private readonly internal: I.Task<E, A>) {}
 
-  static of = <A>(f: () => Promise<A>): Task<A> => Task.from(I.Task(f));
-  static from = <A>(t: I.Task<A>): Task<A> => new Task(t);
+  static of = <A>(f: () => Promise<A>): Task<any, A> => Task.from(I.Task(f));
+  static from = <E, A>(t: I.Task<E, A>): Task<E, A> => new Task(t);
 
-  get tag(): I.Task<A>['tag'] {
-    return this.internal.tag;
-  }
+  readonly tag = 'task';
 
-  get task(): I.Task<A> {
+  get task(): I.Task<E, A> {
     return this.internal;
   }
 
-  private apply = <B>(f: (ra: I.Task<A>) => I.Task<B>): Task<B> => new Task(f(this.internal));
+  private apply = <F, B>(f: (ra: I.Task<E, A>) => I.Task<F, B>): Task<F, B> => new Task(f(this.internal));
 
-  fork = (): Promise<A> => I.fork(this.internal);
-  map = <B>(fab: (a: A) => B): Task<B> => this.apply(I.map(fab));
-  chain = <B>(fab: (a: A) => Task<B>): Task<B> => Task.join(Task.of(() => this.fork().then(fab)));
-  encase = (): Task<Result<any, A>> => Task.from(I.encase(this.internal));
+  fork = (): Promise<Result<E, A>> => this.internal();
+  map = <B>(fab: (a: A) => B): Task<E, B> => this.apply(I.map(fab));
+  mapError = <F>(feb: (e: E) => F): Task<F, A> => this.apply(I.mapError(feb));
+  chain = <B>(fab: (a: A) => Task<E, B>): Task<E, B> => Task.from(
+    async (): Promise<Result<E, B>> => {
+      const { result } = await this.fork();
+      switch(result.tag) {
+      case 'ok':
+        return fab(result.value).fork();
+      case 'err':
+        return Result.from(result);
+      }
+    });
 
-  static reject = <E>(err: E): Task<never> => Task.of(() => Promise.reject(err));
-  static resolve = <A>(value: A): Task<A> => Task.of(() => Promise.resolve(value));
-  static join = <A>(t: Task<Task<A>>): Task<A> => Task.of(() => t.fork().then((t) => t.fork()));
+  static reject = <E, A = any>(err: E): Task<E, A> => Task.from(() => Promise.resolve(Result.Err(err)));
+  static resolve = <A, E = any>(value: A): Task<E, A> => Task.of(() => Promise.resolve(value));
+  static join = <E, A>(t: Task<E, Task<E, A>>): Task<E, A> => t.chain(t => t);
 
-  static record = <R extends Record<string, Task<any>>>(record: R): Task<{ [P in keyof R]: TaskType<R[P]> }> => 
-    Task.of((): Promise<{ [P in keyof R]: TaskType<R[P]> }> => 
-       P.record(
+  static all =  <T extends readonly Task<E, any>[] | [], E = any>(arr: T): Task<E, { -readonly [P in keyof T]: TaskType<T[P]> }> => 
+    Task.from(
+      () =>  Promise.all(arr.map(t => t.fork()))
+        .then(Result.all) as unknown as Promise<Result<E, { -readonly [P in keyof T]: TaskType<T[P]> }>>
+    );
+
+  static array = Task.all;
+
+  static record = <R extends Record<string, Task<E, any>>, E = any>(record: R): Task<E, { -readonly [P in keyof R]: TaskType<R[P]> }> => 
+    Task.from(
+      () => P.record(
         Object.entries(record).reduce(
-          (acc, [key, value]): Partial<{ [P in keyof R]: Promise<TaskType<R[P]>> }> => ({
+          (acc, [key, value]): Partial<{ [P in keyof R]: Promise<Result<E, TaskType<R[P]>>> }> => ({
             ...acc, [key]: value.fork()
-          }), {})  as { [P in keyof R]: Promise<TaskType<R[P]>> }
-       ) as Promise<{ [P in keyof R]: TaskType<R[P]> }>
+          }), {})  as { [P in keyof R]: Promise<Result<E, TaskType<R[P]>>> }
+      ).then(Result.record) as Promise<Result<E, { [P in keyof R]: TaskType<R[P]> }>>
     );
 }
 
 export const record = Task.record;
+export const array = Task.array;
+export const all = Task.all;
 export const join = Task.join;
 export const from = Task.from;
 export const of = Task.of;

@@ -9,8 +9,8 @@ export class Result<E, A> {
   private constructor(private readonly internal: I.Result<E, A>) {}
 
   static from = <E, A>(r: I.Result<E, A>) => new Result<E, A>(r);
-  static Ok = <A>(value: A) => Result.from(I.Ok(value));
-  static Err = <E>(error: E) => Result.from(I.Err(error));
+  static Ok = <A>(value: A): Result<any, A> => Result.from(I.Ok(value));
+  static Err = <E>(error: E): Result<E, any> => Result.from(I.Err(error));
 
   get tag(): I.Result<E, A>['tag'] {
     return this.internal.tag;
@@ -31,7 +31,7 @@ export class Result<E, A> {
   private apply = <C, B>(f: (ra: I.Result<E, A>) => I.Result<C, B>): Result<C, B> => new Result(f(this.internal));
 
   map = <B>(fab: (a: A) => B): Result<E, B> => this.apply(I.map(fab));
-  mapError = <B>(feb: (e: E) => B): Result<B, A> => this.apply(I.mapError(feb));
+  mapError = <F>(fef: (e: E) => F): Result<F, A> => this.apply(I.mapError(fef));
   chain = <B>(fab: (a: A) => Result<E, B>): Result<E, B> => Result.join(this.apply(I.map(fab)));
   fold = <B>(f: I.Fold<E, A, B>): B => I.fold(f)(this.internal);
   or = (ra: Result<E, A>) => this.apply(I.orElse(ra.internal));
@@ -59,10 +59,11 @@ export class Result<E, A> {
     (f: (a: A) => B): Result<E, B> =>
       r.map(f);
 
-  static all = <A extends Array<Result<E, any>>, E = any>(arr: A): Result<E, { [P in keyof A]: ResultType<A[P]> }> => {
-    return arr.reduce((acc, curr): Result<E, Partial<{ [P in keyof A]: ResultType<A[P]> }>> => acc.chain(
-      a => curr.map((v) => [...a, v ] as Partial<{ [P in keyof A]: ResultType<A[P]> }>)
-    ), Ok([]));
+  static all = <T extends readonly Result<E, any>[] | [], E = any>(arr: T): Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }> => {
+    return (arr as readonly Result<E, any>[]).reduce(
+      (acc: Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }>, curr): Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }> => acc.chain(
+        a => curr.map((v) => [...(a as readonly unknown[]), v ]  as unknown as { -readonly [P in keyof T]: ResultType<T[P]> })
+      ), Ok([]));
   };
     
   static some = <A extends NonEmptyArray<Result<E, any>>, E = any>(arr: A): Result<E, ResultType<A[number]>> => {
@@ -78,6 +79,8 @@ export class Result<E, A> {
     , []);
   };
   
+  static array = Result.all;
+
   static record = <R extends Record<string, Result<E, any>>, E = any>(record: R): Result<E, { [P in keyof R]: ResultType<R[P]> }> => {
     return Object.entries(record).reduce((acc, [key, value]): Result<E, Partial<{ [P in keyof R]: ResultType<R[P]> }>> => {
       return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
@@ -85,6 +88,8 @@ export class Result<E, A> {
   };
 }
 
+export const array = Result.array;
+export const all = Result.all;
 export const record = Result.record;
 export const from = Result.from;
 export const join = Result.join;

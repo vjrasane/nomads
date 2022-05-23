@@ -1,4 +1,4 @@
-import { Result } from '../result';
+import { Result } from '../../../result';
 import * as I from './internal';
 
 type MaybeType<M> = M extends Maybe<infer T> ? T : never;
