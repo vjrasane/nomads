@@ -178,18 +178,11 @@ export interface Maybe<A> {
   appendTo: <T>(arr: Array<T | A>) => Array<T | A>
 }
 
-type MaybeType<M> = M extends Maybe<infer T> ? T : never;
+type Optional<A> = A | undefined;
 
-const apply = <A, B>(f: (ra: I.Maybe<A>) => I.Maybe<B>, m: I.Maybe<A>): Maybe<B> => MaybeConstructor(f(m));
-const map = <A, B>(fab: (a: A) => B, m: I.Maybe<A>): Maybe<B> => apply(I.map(fab), m);
-const chain = <A, B>(fab: (a: A) => Maybe<B>, m: I.Maybe<A>): Maybe<B> => {
-  switch(m.tag) {
-  case 'just':
-    return fab(m.value);
-  default:
-    return MaybeConstructor(m);
-  }
-};
+type Nullable<A> = Optional<A> | null;
+
+type MaybeType<M> = M extends Maybe<infer T> ? T : never;
 
 const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
   maybe,
@@ -209,6 +202,22 @@ const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
   concatTo: (arr) => map((a) => [a, ...arr], maybe).getOrElse(arr),
   appendTo: (arr) => map((a)=> [...arr, a], maybe).getOrElse(arr)
 });
+
+export const Just = <A>(v: A): Maybe<A> => MaybeConstructor(I.Just(v));
+
+export const Nothing: Maybe<any> = MaybeConstructor(I.Nothing);
+
+
+const apply = <A, B>(f: (ra: I.Maybe<A>) => I.Maybe<B>, m: I.Maybe<A>): Maybe<B> => MaybeConstructor(f(m));
+const map = <A, B>(fab: (a: A) => B, m: I.Maybe<A>): Maybe<B> => apply(I.map(fab), m);
+const chain = <A, B>(fab: (a: A) => Maybe<B>, m: I.Maybe<A>): Maybe<B> => {
+  switch(m.tag) {
+  case 'just':
+    return fab(m.value);
+  default:
+    return MaybeConstructor(m);
+  }
+};
 
 export const all = <T extends readonly Maybe<any>[] | []>(arr: T): Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }> => {
   return (arr as readonly Maybe<any>[]).reduce(
@@ -238,15 +247,6 @@ export const record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<{
     return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
   }, Just({})) as unknown as Maybe<{ [P in keyof R]: MaybeType<R[P]> }>;
 };
-
-
-type Optional<A> = A | undefined;
-
-type Nullable<A> = Optional<A> | null;
-
-export const Just = <A>(v: A): Maybe<A> => MaybeConstructor(I.Just(v));
-
-export const Nothing: Maybe<any> = MaybeConstructor(I.Nothing);
 
 export const applyTo = <A, B>(m: Maybe<A>) => (f: (a: A) => B): Maybe<B> => m.map(f);
 
