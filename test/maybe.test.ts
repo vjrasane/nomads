@@ -374,16 +374,6 @@ describe('Maybe', () => {
     });
   });
 
-  describe('wrap', () => {
-    it('wraps just value', () => {
-      expect(Maybe.from({ tag: 'just', value: 42 }).maybe).toEqual({ tag: 'just', value: 42 });
-    });
-
-    it('wraps nothing value', () => {
-      expect(Maybe.from({ tag: 'nothing' }).maybe).toEqual({ tag: 'nothing' });
-    });
-  });
-
   describe('record', () => {
     it('gets just from a record of justs', () => {
       expect(Maybe.record({
