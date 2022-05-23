@@ -159,7 +159,6 @@ namespace I {
   export const find = <A, T extends readonly A[]>(f: (a: A) => boolean) => (arr: T): Maybe<A> => fromOptional(arr.find(f));
 }
 
-
 export interface Maybe<A> {
   readonly value: A | undefined,
   readonly tag: I.Maybe<A>['tag'],
@@ -210,40 +209,6 @@ const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
   concatTo: (arr) => map((a) => [a, ...arr], maybe).getOrElse(arr),
   appendTo: (arr) => map((a)=> [...arr, a], maybe).getOrElse(arr)
 });
-// class MaybeClass<A> implements Maybe<A> {
-//   constructor(readonly maybe: I.Maybe<A>) {}
-
-//   get tag(): I.Maybe<A>['tag'] {
-//     return this.maybe.tag;
-//   }
-  
-//   get value(): A | undefined {
-//     return I.toOptional(this.maybe);
-//   }
-  
-  
-//   map = <B>(fab: (a: A) => B): Maybe<B> => map(fab, this.maybe);
-//   chain = <B>(fab: (a: A) => Maybe<B>): Maybe<B> => {
-//     switch(this.maybe.tag) {
-//     case 'just':
-//       return fab(this.maybe.value);
-//     default:
-//       return MaybeConstructor(this.maybe);
-//     }
-//   };
-//   filter = (f: (a: A) => boolean): Maybe<A> => apply(I.filter(f), this.maybe);
-//   fold = <B>(f: I.Fold<A, B>): B => I.fold(f)(this.maybe);
-//   or = (m: Maybe<A>) => apply(I.orElse(m.maybe), this.maybe);
-//   orElse = (m: Maybe<A>) => apply(I.or(m.maybe), this.maybe);
-//   default = (a: A) => apply(I.defaultTo(a), this.maybe);
-//   toResult = <E>(err: E): Result<E, A> => I.toResult<E, A>(err)(this.maybe);
-//   get = (): A | undefined => this.value;
-//   getOrElse = (def: A) => I.getOrElse(def)(this.maybe);
-//   toString = (): string => I.toString(this.maybe);
-  
-//   concatTo = <T>(arr: Array<T | A>): Array<T | A> => map((a): Array<T | A> => [a, ...arr], this.maybe).getOrElse(arr);
-//   appendTo = <T>(arr: Array<T | A>): Array<T | A> => map((a): Array<T | A> => [...arr, a], this.maybe).getOrElse(arr);
-// }
 
 export const all = <T extends readonly Maybe<any>[] | []>(arr: T): Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }> => {
   return (arr as readonly Maybe<any>[]).reduce(
