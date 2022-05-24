@@ -133,96 +133,104 @@ export const toString = <E, A>(r: Result<E, A>): string => {
 
 }
 
-type ResultType<R> = R extends Result<any, infer T> ? T : never;
-
-export class Result<E, A> {
-  private constructor(private readonly internal: I.Result<E, A>) {}
-
-  static from = <E, A>(r: I.Result<E, A>) => new Result<E, A>(r);
-  static Ok = <A>(value: A): Result<any, A> => Result.from(I.Ok(value));
-  static Err = <E>(error: E): Result<E, any> => Result.from(I.Err(error));
-
-  get tag(): I.Result<E, A>['tag'] {
-    return this.internal.tag;
-  }
-
-  get value(): A | undefined {
-    return I.getValue(this.internal).value;
-  }
-
-  get error(): E | undefined {
-    return I.getError(this.internal).value;
-  }
-
-  get result(): I.Result<E, A> {
-    return this.internal;
-  }
-
-  private apply = <C, B>(f: (ra: I.Result<E, A>) => I.Result<C, B>): Result<C, B> => new Result(f(this.internal));
-
-  map = <B>(fab: (a: A) => B): Result<E, B> => this.apply(I.map(fab));
-  mapError = <F>(fef: (e: E) => F): Result<F, A> => this.apply(I.mapError(fef));
-  chain = <B>(fab: (a: A) => Result<E, B>): Result<E, B> => Result.join(this.apply(I.map(fab)));
-  fold = <B>(f: I.Fold<E, A, B>): B => I.fold(f)(this.internal);
-  or = (ra: Result<E, A>) => this.apply(I.orElse(ra.internal));
-  orElse = (ra: Result<E, A>) => this.apply(I.or(ra.internal));
-  default = (a: A): Result<E, A> => this.apply(I.defaultTo(a));
-  toEither = (): Either<E, A> => I.toEither(this.internal);
-  toMaybe = (): Maybe<A> => this.getValue();
-  get = (): A | undefined => this.value;
-  getOrElse = (def: A) => I.getOrElse(def)(this.internal);
-  getValue = (): Maybe<A> => I.getValue(this.internal);
-  getError = (): Maybe<E> => I.getError(this.internal);
-  toString = (): string => I.toString(this.internal);
-
-  static join = <E, A>(r: Result<E, Result<E, A>>): Result<E, A> => {
-    switch (r.internal.tag) {
-    case 'ok':
-      return r.internal.value;
-    default:
-      return new Result(r.internal);
-    }
-  };
-
-  static applyTo =
-    <A, B, E>(r: Result<E, A>) =>
-    (f: (a: A) => B): Result<E, B> =>
-      r.map(f);
-
-  static all = <T extends readonly Result<E, any>[] | [], E = any>(arr: T): Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }> => {
-    return (arr as readonly Result<E, any>[]).reduce(
-      (acc: Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }>, curr): Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }> => acc.chain(
-        a => curr.map((v) => [...(a as readonly unknown[]), v ]  as unknown as { -readonly [P in keyof T]: ResultType<T[P]> })
-      ), Ok([]));
-  };
-    
-  static some = <A extends NonEmptyArray<Result<E, any>>, E = any>(arr: A): Result<E, ResultType<A[number]>> => {
-    return arr.reduce((acc, curr): Result<E, ResultType<A[number]>> => acc.or(curr));
-  };
-    
-  static values = <A extends Array<Result<E, any>>, E = any>(arr: A): Array<ResultType<A[number]>> => {
-    return arr.reduce((acc: Array<ResultType<A[number]>>, curr: A[number]): Array<ResultType<A[number]>> => 
-      curr.fold<Array<ResultType<A[number]>>>({
-        err: () => acc,
-        ok: v => [...acc, v]
-      })
-    , []);
-  };
-  
-  static array = Result.all;
-
-  static record = <R extends Record<string, Result<E, any>>, E = any>(record: R): Result<E, { [P in keyof R]: ResultType<R[P]> }> => {
-    return Object.entries(record).reduce((acc, [key, value]): Result<E, Partial<{ [P in keyof R]: ResultType<R[P]> }>> => {
-      return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
-    }, Ok({})) as unknown as Result<E, { [P in keyof R]: ResultType<R[P]> }>;
-  };
+export interface Result<E, A> {
+  result: I.Result<E, A>,
+  tag: I.Result<E, A>['tag'],
+  value: A | undefined,
+  error: E | undefined,
+  map: <B>(fab: (a: A) => B) => Result<E, B>,
+  mapError: <F>(fef: (e: E) => F) => Result<F, A>,
+  chain: <B>(fab: (a: A) => Result<E, B>) => Result<E, B>,
+  fold: <B>(f: I.Fold<E, A, B>) => B,
+  or: (ra: Result<E, A>) => Result<E, A>,
+  orElse: (ra: Result<E, A>) => Result<E, A>,
+  default: (a: A) => Result<E, A>,
+  toEither: () => Either<E, A>,
+  toMaybe: () => Maybe<A>,
+  get: () => A | undefined,
+  getOrElse: (def: A) => A,
+  getValue: () => Maybe<A>,
+  getError: () => Maybe<E>,
+  toString: () => string,
 }
 
-export const array = Result.array;
-export const all = Result.all;
-export const record = Result.record;
-export const from = Result.from;
-export const join = Result.join;
-export const applyTo = Result.applyTo;
-export const Ok = Result.Ok;
-export const Err = Result.Err;
+type ResultType<R> = R extends Result<any, infer T> ? T : never;
+
+const ResultConstructor = <E, A>(result: I.Result<E, A>): Result<E, A> => ({
+  result,
+  tag: result.tag,
+  value: I.getValue(result).value,
+  error: I.getError(result).value,
+  map: (fab) => map(fab, result),
+  mapError: (fef) => apply(I.mapError(fef), result),
+  chain: (fab) => chain(fab, result),
+  fold: (f) => I.fold(f)(result),
+  or: (other) => apply(I.or(result), other.result),
+  orElse: (other) => apply(I.orElse(result), other.result),
+  default: (def) => apply(I.defaultTo(def), result),
+  toEither: () => I.toEither(result),
+  toMaybe: () => I.getValue(result),
+  get: () => I.getValue(result).value,
+  getOrElse: (def) => I.getOrElse(def)(result),
+  getValue: () => I.getValue(result),
+  getError: () => I.getError(result),
+  toString: () => I.toString(result)
+});
+
+const apply = <A, B, E, F>(f: (ra: I.Result<E, A>) => I.Result<F, B>, r: I.Result<E, A>): Result<F, B> => ResultConstructor(f(r));
+const map = <E, A, B>(fab: (a: A) => B, r: I.Result<E, A>): Result<E, B> => apply(I.map(fab), r);
+const chain = <E, A, B>(fab: (a: A) => Result<E, B>, r: I.Result<E, A>): Result<E, B> => {
+  switch(r.tag) {
+  case 'ok':
+    return fab(r.value);
+  default:
+    return ResultConstructor(r);
+  }
+};
+
+export const Ok = <A>(value: A): Result<any, A> => ResultConstructor(I.Ok(value));
+export const Err = <E>(error: E): Result<E, any> => ResultConstructor(I.Err(error));
+
+export const applyTo = <A, B, E>(r: Result<E, A>) => (f: (a: A) => B): Result<E, B> => r.map(f);
+
+export const all = <T extends readonly Result<E, any>[] | [], E = any>(arr: T): Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }> => {
+  return (arr as readonly Result<E, any>[]).reduce(
+    (acc: Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }>, curr): Result<E, { -readonly [P in keyof T]: ResultType<T[P]> }> => acc.chain(
+      a => curr.map((v) => [...(a as readonly unknown[]), v ]  as unknown as { -readonly [P in keyof T]: ResultType<T[P]> })
+    ), Ok([]));
+};
+    
+export const some = <A extends NonEmptyArray<Result<E, any>>, E = any>(arr: A): Result<E, ResultType<A[number]>> => {
+  return arr.reduce((acc, curr): Result<E, ResultType<A[number]>> => acc.or(curr));
+};
+    
+export const values = <A extends Array<Result<E, any>>, E = any>(arr: A): Array<ResultType<A[number]>> => {
+  return arr.reduce((acc: Array<ResultType<A[number]>>, curr: A[number]): Array<ResultType<A[number]>> => 
+    curr.fold<Array<ResultType<A[number]>>>({
+      err: () => acc,
+      ok: v => [...acc, v]
+    })
+  , []);
+};
+  
+export const array = all;
+
+export const record = <R extends Record<string, Result<E, any>>, E = any>(record: R): Result<E, { [P in keyof R]: ResultType<R[P]> }> => {
+  return Object.entries(record).reduce((acc, [key, value]): Result<E, Partial<{ [P in keyof R]: ResultType<R[P]> }>> => {
+    return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
+  }, Ok({})) as unknown as Result<E, { [P in keyof R]: ResultType<R[P]> }>;
+};
+
+export const join =  <E, A>(r: Result<E, Result<E, A>>): Result<E, A> => r.chain(v => v);
+
+export const Result = {
+  Ok,
+  Err,
+  applyTo,
+  all,
+  some,
+  array,
+  record,
+  values,
+  join
+} as const;

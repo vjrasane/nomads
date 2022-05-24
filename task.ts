@@ -39,7 +39,7 @@ const chain = <E, A, B>(fab: (a: A) => Task<E, B>, t: I.Task<E, A>): Task<E, B> 
     case 'ok':
       return fab(result.value).fork();
     case 'err':
-      return Result.from(result);
+      return Err(result.error);
     }
   });
 
