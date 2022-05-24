@@ -7,8 +7,8 @@
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
     "prepack": "yarn build",
-    "cleanup": "ts-node bin/cleanup.ts",
-    "postpack": "npm run cleanup",
+    "clean": "ts-node bin/cleanup.ts",
+    "postpack": "npm run clean",
     "build": "tsc --project tsconfig.prod.json",
     "test": "jest"
   },

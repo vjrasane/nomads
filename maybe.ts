@@ -207,7 +207,6 @@ export const Just = <A>(v: A): Maybe<A> => MaybeConstructor(I.Just(v));
 
 export const Nothing: Maybe<any> = MaybeConstructor(I.Nothing);
 
-
 const apply = <A, B>(f: (ra: I.Maybe<A>) => I.Maybe<B>, m: I.Maybe<A>): Maybe<B> => MaybeConstructor(f(m));
 const map = <A, B>(fab: (a: A) => B, m: I.Maybe<A>): Maybe<B> => apply(I.map(fab), m);
 const chain = <A, B>(fab: (a: A) => Maybe<B>, m: I.Maybe<A>): Maybe<B> => {
