@@ -15,6 +15,66 @@ describe('Maybe', () => {
     expect(Just(42).value).toBe(42);
   });
 
+  describe('functor laws', () => {
+    it('identity', () => {
+      expect(Just(42).map(v => v).maybe).toEqual(Just(42).maybe);
+    });
+
+    it('composition', () => {
+      const f = (v: number) => v * 2;
+      const g = (v: number) => v + 2;
+      expect(Just(42).map(f).map(g).maybe).toEqual(Just(42).map(v => g(f(v))).maybe);
+    });
+  });
+
+  describe('applicative laws', () => {
+    it('identity', () => {
+      const left = Just((v: number) => v).apply(Just(42));
+      const right = Just(42);
+      expect(left.maybe).toEqual(right.maybe);
+    });
+
+    it('homomorphism', () => {
+      const f = (v: number) => v * 2;
+      const left = Just(f).apply(Just(42));
+      const right = Just(f(42));
+      expect(left.maybe).toEqual(right.maybe);
+    });
+
+    it('interchange', () => {
+      const f = (v: number) => v * 2;
+      const left = Just(f).apply(Just(42));
+      const right = Just((g: typeof f) => g(42)).apply(Just(f));
+      expect(left.maybe).toEqual(right.maybe);
+    });
+  });
+
+  describe('monad laws', () => {
+    it('left identity', () => {
+      const ret = <A>(n: A) => Just(n);
+      const f = (n: number) => Just(n * 2); 
+      const left = ret(42).chain(f);
+      const right = f(42);
+      expect(left.maybe).toEqual(right.maybe);
+    });
+
+    it('right identity', () => {
+      const ret = <A>(n: A) => Just(n);
+      const left = Just(42).chain(ret);
+      const right = Just(42);
+      expect(left.maybe).toEqual(right.maybe);
+    });
+
+    it('associativity', () => {
+      const m = Just(42);
+      const f = (n: number) => Just(n + 2);
+      const g = (n: number) => Just(n * 2);
+      const left = m.chain(f).chain(g);
+      const right = m.chain(v => f(v).chain(g));
+      expect(left.maybe).toEqual(right.maybe);
+    });
+  });
+
   describe('map', () => {
     it('maps just value', () => {
       const mapped = Just(42).map((n) => n * 2);
@@ -107,44 +167,6 @@ describe('Maybe', () => {
     it('nothing defaults to first default value', () => {
       const def = Nothing.default(0).default(-1);
       expect(def.maybe).toEqual({ tag: 'just', value: 0 });
-    });
-  });
-
-  describe('applyTo', () => {
-    it('just function applies to just value', () => {
-      const applied = Just((n: number) => n * 2).chain(Maybe.applyTo(Just(42)));
-      expect(applied.maybe).toEqual({ tag: 'just', value: 84 });
-    });
-
-    it('just function applies to nothing', () => {
-      const applied = Just((n: number) => n * 2).chain(Maybe.applyTo(Nothing));
-      expect(applied.maybe).toEqual({ tag: 'nothing' });
-    });
-
-    it('nothing applies to just value', () => {
-      const applied = Nothing.chain(Maybe.applyTo(Just(42)));
-      expect(applied.maybe).toEqual({ tag: 'nothing' });
-    });
-
-    it('nothing value applies to nothing', () => {
-      const applied = Nothing.chain(Maybe.applyTo(Nothing));
-      expect(applied.maybe).toEqual({ tag: 'nothing' });
-    });
-
-    it('applies a curried function multiple times to just values', () => {
-      const applied = Just((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(Maybe.applyTo(Just(1)))
-        .chain(Maybe.applyTo(Just(2)))
-        .chain(Maybe.applyTo(Just(3)));
-      expect(applied.maybe).toEqual({ tag: 'just', value: 6 });
-    });
-
-    it('applies a curried function multiple times to just and nothing values', () => {
-      const applied = Just((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(Maybe.applyTo(Just(1)))
-        .chain(Maybe.applyTo(Nothing))
-        .chain(Maybe.applyTo(Just(3)));
-      expect(applied.maybe).toEqual({ tag: 'nothing' });
     });
   });
 
@@ -619,18 +641,75 @@ describe('Maybe', () => {
   });
 
   describe('apply', () => {
+    it ('applies function to just value', () => {
+      const applied = Just((n: number) => n * 2)
+        .apply(Just(42));
+      expect(applied.maybe).toEqual({tag: 'just', value: 84});
+    });
+
+    it ('applies function to nothing', () => {
+      const applied = Just((n: number) => n * 2)
+        .apply(Nothing);
+      expect(applied.maybe).toEqual({tag: 'nothing' });
+    });
+
+    it ('cannot apply nothing to just', () => {
+      const applied = Nothing
+        /* @ts-expect-error testing */
+        .apply(Just(42));
+      expect(applied.maybe).toEqual({tag: 'nothing' });
+    });
+
+    it ('cannot apply maybe not containing a function', () => {
+      const applied = Just(0)
+        /* @ts-expect-error testing */
+        .apply(Just(42));
+      expect(applied.maybe).toEqual({tag: 'just', value: 42 });
+    });
+
+    it('applies nothing to nothing', () => {
+      const applied = Nothing.apply(Nothing);
+      expect(applied.maybe).toEqual({tag: 'nothing' });
+    });
+
+    it('applies a curried function multiple times to just values', () => {
+      const applied = Just((a: number) => (b: number) => (c: number) => a + b * c)
+        .apply(Just(1))
+        .apply(Just(2))
+        .apply(Just(3));
+      expect(applied.maybe).toEqual({ tag: 'just', value: 7 });
+    });
+
+    it('applies a curried function multiple times to just and nothing values', () => {
+      const applied = Just((a: number) => (b: number) => (c: number) => a + b + c)
+        .apply(Just(1))
+        .apply(Nothing)
+        .apply(Just(3));
+      expect(applied.maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('autocurries function', () => {
+      const applied = Just((a: number, b: number, c: number) => a + b * c)
+        .apply(Just(1))
+        .apply(Just(2))
+        .apply(Just(3));
+      expect(applied.maybe).toEqual({ tag: 'just', value: 7 });
+    });
+  });
+
+  describe('applyAll', () => {
     it ('applies function to array of justs', () => {
-      const applied = Maybe.apply((a, b) => a + b, [Just(42), Just(69)]);
+      const applied = Maybe.applyAll((a, b) => a + b, [Just(42), Just(69)]);
       expect(applied.maybe).toEqual({tag: 'just', value: 111});
     });
 
     it ('applies function to array with one nothing', () => {
-      const applied = Maybe.apply((a, b) => a + b, [Just(42), Nothing]);
+      const applied = Maybe.applyAll((a, b) => a + b, [Just(42), Nothing]);
       expect(applied.maybe).toEqual({tag: 'nothing' });
     });
 
     it ('test typings', () => {
-      const applied = Maybe.apply(
+      const applied = Maybe.applyAll(
         (a: number, b: boolean, c: string) => [a,b,c] as const, 
         [Just(42), Just(true), Just('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);

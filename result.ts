@@ -1,6 +1,6 @@
 import { Either, Left, Right } from './either';
 import { Just, Maybe, Nothing } from './maybe';
-import { NonEmptyArray } from './non-empty-array';
+import { curry, FunctionInputType, FunctionOutputType, NonEmptyArray } from './src/common';
 
 namespace I {
 
@@ -141,6 +141,7 @@ export interface Result<E, A> {
   map: <B>(fab: (a: A) => B) => Result<E, B>,
   mapError: <F>(fef: (e: E) => F) => Result<F, A>,
   chain: <B>(fab: (a: A) => Result<E, B>) => Result<E, B>,
+  apply: (v: Result<E, FunctionInputType<A>>) => Result<E, FunctionOutputType<A>>
   fold: <B>(f: I.Fold<E, A, B>) => B,
   or: (ra: Result<E, A>) => Result<E, A>,
   orElse: (ra: Result<E, A>) => Result<E, A>,
@@ -168,6 +169,7 @@ const ResultConstructor = <E, A>(result: I.Result<E, A>): Result<E, A> => ({
   map: (fab) => map(fab, result),
   mapError: <B>(fef: (e: E) => B) => ResultConstructor(I.mapError<E, A, B>(fef)(result)),
   chain: (fab) => chain(fab, result),
+  apply: (v) => chain(apply(v), result),
   fold: (f) => I.fold(f)(result),
   or: (other) => ResultConstructor(I.or(result)(other.result)),
   orElse: (other) => ResultConstructor(I.orElse(result)(other.result)),
@@ -190,15 +192,16 @@ const chain = <E, A, B>(fab: (a: A) => Result<E, B>, r: I.Result<E, A>): Result<
     return ResultConstructor(r);
   }
 };
+const apply = <E, A>(a: Result<E, FunctionInputType<A>>) => (f: A): Result<E, FunctionOutputType<A>> => a.map(
+  (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
+);
 
 export const Ok = <A>(value: A): Result<any, A> => ResultConstructor(I.Ok(value));
 export const Err = <E>(error: E): Result<E, any> => ResultConstructor(I.Err(error));
 
-export const apply = <A extends readonly Result<any, any>[] | [], P extends any[] & ResultTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Result<ErrorType<A[keyof A]>, ReturnType<F>> => {
+export const applyAll = <A extends readonly Result<any, any>[] | [], P extends any[] & ResultTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Result<ErrorType<A[keyof A]>, ReturnType<F>> => {
   return Result.all(args) .map((args) => f(...args as Parameters<F>)) as Result<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
-
-export const applyTo = <E, A, B>(r: Result<E, A>) => (f: (a: A) => B): Result<E, B> => r.map(f);
 
 export const all = <T extends readonly Result<any, any>[] | []>(arr: T): Result<ErrorType<T[keyof T]>, ResultTypeConstruct<T>> => {
   return (arr as readonly Result<ErrorType<T[keyof T]>, any>[]).reduce(
@@ -233,8 +236,7 @@ export const join =  <E, A>(r: Result<E, Result<E, A>>): Result<E, A> => r.chain
 export const Result = {
   Ok,
   Err,
-  applyTo,
-  apply,
+  applyAll,
   all,
   some,
   array,

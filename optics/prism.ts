@@ -1,7 +1,7 @@
 /* BETA */
 
 import { Iso } from './iso';
-import { Maybe, Just } from '../monads/maybe';
+import { Maybe, Just } from '../maybe';
 
 export interface Prism<A, B> {
   readonly getOption: (a: A) => Maybe<B>;

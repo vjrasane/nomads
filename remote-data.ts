@@ -1,6 +1,6 @@
 import { Just, Maybe, Nothing } from './maybe';
-import { NonEmptyArray } from './non-empty-array';
 import { Result } from './result';
+import { curry, FunctionInputType, FunctionOutputType, NonEmptyArray } from './src/common';
 
 namespace I {
 
@@ -150,6 +150,7 @@ export interface RemoteData<E, A> {
   map: <B>(fab: (a: A) => B) => RemoteData<E, B>,
   mapError: <F>(fef: (e: E) => F) => RemoteData<F, A>,
   chain: <B>(fab: (a: A) => RemoteData<E, B>) => RemoteData<E, B>,
+  apply: (v: RemoteData<E, FunctionInputType<A>>) => RemoteData<E, FunctionOutputType<A>>,
   fold: <B>(f: I.Fold<E, A, B>) => B,
   or: (ra: RemoteData<E, A>) => RemoteData<E, A>,
   orElse: (ra: RemoteData<E, A>) => RemoteData<E, A>,
@@ -177,6 +178,7 @@ const RemoteDataConstructor = <E, A>(remoteData: I.RemoteData<E, A>): RemoteData
   map: (fab) => map(fab, remoteData),
   mapError: <B>(fef: (e: E) => B) => RemoteDataConstructor(I.mapError<E, A, B>(fef)(remoteData)),
   chain: (fab) => chain(fab, remoteData),
+  apply: (v) => chain(apply(v), remoteData),
   fold: (f) => I.fold(f)(remoteData),
   or: (other) => RemoteDataConstructor(I.or(remoteData)(other.remoteData)),
   orElse: (other) => RemoteDataConstructor(I.orElse(remoteData)(other.remoteData)),
@@ -198,18 +200,18 @@ const chain = <E, A, B>(fab: (a: A) => RemoteData<E, B>, r: I.RemoteData<E, A>):
     return RemoteDataConstructor(r);
   }
 };
+const apply = <E, A>(a: RemoteData<E, FunctionInputType<A>>) => (f: A): RemoteData<E, FunctionOutputType<A>> => a.map(
+  (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
+);
 
 export const Success = <A>(value: A): RemoteData<any, A> => RemoteDataConstructor(I.Success(value));
 export const Failure = <E>(error: E): RemoteData<E, any> => RemoteDataConstructor(I.Failure(error));
 export const Loading: RemoteData<any, any> = RemoteDataConstructor(I.Loading);
 export const StandBy: RemoteData<any, any> = RemoteDataConstructor(I.StandBy);
 
-export const apply = <A extends readonly RemoteData<any, any>[] | [], P extends any[] & RemoteDataTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): RemoteData<ErrorType<A[keyof A]>, ReturnType<F>> => {
+export const applyAll = <A extends readonly RemoteData<any, any>[] | [], P extends any[] & RemoteDataTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): RemoteData<ErrorType<A[keyof A]>, ReturnType<F>> => {
   return RemoteData.all(args).map((args) => f(...args as Parameters<F>)) as RemoteData<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
-
-export const applyTo = <E, A, B>(r: RemoteData<E, A>) => (f: (a: A) => B): RemoteData<E, B> => r.map(f);
-
 
 export const join = <E, A>(r: RemoteData<E, RemoteData<E, A>>): RemoteData<E, A> => r.chain(v => v);
 
@@ -254,8 +256,7 @@ export const RemoteData = {
   Failure,
   StandBy,
   Loading,
-  applyTo,
-  apply,
+  applyAll,
   all,
   some,
   array,

@@ -1,4 +1,5 @@
 import { Result, Ok, Err } from './result';
+import { curry, FunctionInputType, FunctionOutputType } from './src/common';
 
 namespace I {
   export type Task<E, A> = () => Promise<Result<E, A>>;
@@ -17,6 +18,7 @@ export interface Task<E, A> {
   map: <B>(fab: (a: A) => B) => Task<E, B>,
   mapError: <F>(fef: (e: E) => F) => Task<F, A>,
   chain: <B>(fab: (a: A) => Task<E, B>) => Task<E, B>,
+  apply: (t: Task<E, FunctionInputType<A>>) => Task<E, FunctionOutputType<A>>
 }
 
 type TaskType<T> = T extends Task<any, infer A> ? A : never;
@@ -31,7 +33,8 @@ const TaskConstructor = <E, A>(task: I.Task<E, A>): Task<E, A> => ({
   fork: () => task(),
   map: (fab) => map(fab, task),
   mapError: <F>(fef: (e: E) => F) => TaskConstructor(I.mapError<E, A, F>(fef)(task)),
-  chain: (fab) => chain(fab, task)
+  chain: (fab) => chain(fab, task),
+  apply: (v) => chain(apply(v), task),
 });
 
 const map = <E, A, B>(fab: (a: A) => B, t: I.Task<E, A>): Task<E, B> => TaskConstructor(I.map<E, A, B>(fab)(t));
@@ -45,6 +48,10 @@ const chain = <E, A, B>(fab: (a: A) => Task<E, B>, t: I.Task<E, A>): Task<E, B> 
       return Err(result.error);
     }
   });
+  
+const apply = <E, A>(a: Task<E, FunctionInputType<A>>) => (f: A): Task<E, FunctionOutputType<A>> => a.map(
+  v => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
+);
 
 const mapValues = <K extends symbol | string | number, R extends Record<K, unknown>, B>(
   mapper: (value: R[keyof R]) => B, 
@@ -73,11 +80,9 @@ export const sleep = (ms: number): Task<any, undefined> => TaskConstructor(
 
 export const join = <E, A>(t: Task<E, Task<E, A>>): Task<E, A> => t.chain(t => t);
 
-export const apply = <A extends readonly Task<any, any>[] | [], P extends any[] & TaskTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
+export const applyAll = <A extends readonly Task<any, any>[] | [], P extends any[] & TaskTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
   return Task.all(args) .map((args) => f(...args as Parameters<F>)) as Task<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
-
-export const applyTo = <E, A, B>(r: Task<E, A>) => (f: (a: A) => B): Task<E, B> => r.map(f);
 
 export const all =  <T extends readonly Task<any, any>[] | []>(arr: T): Task<ErrorType<T[keyof T]>, TaskTypeConstruct<T>> => 
   TaskConstructor(
@@ -103,5 +108,4 @@ Task.join = join;
 Task.all = all;
 Task.array = array;
 Task.record = record;
-Task.apply = apply;
-Task.applyTo = applyTo;
+Task.applyAll = applyAll;

@@ -1,5 +1,6 @@
 
 import { Err, Ok, Result } from './result';
+import { curry, FunctionInputType, FunctionOutputType, isNonNullable, isNonOptional, NonOptional, Nullable, Optional } from './src/common';
 
 namespace I {
   type Just<A> = {
@@ -127,13 +128,6 @@ namespace I {
     }
   };
 
-  const isNonOptional = <A>(a: A): a is NonOptional<A> => {
-    return a !== undefined;
-  };
-
-  const isNonNullable = <A>(a: A): a is NonNullable<A> => {
-    return a != null;
-  };
 
   export const fromOptional = <A>(a: A | undefined): Maybe<NonOptional<A>> => {
     if (isNonOptional(a)) return Just(a);
@@ -166,6 +160,7 @@ export interface Maybe<A> {
   get: () => A | undefined
   map: <B>(fab: (a: A) => B) => Maybe<B>,
   chain: <B>(fab: (a: A) => Maybe<B>) => Maybe<B>,
+  apply: (v: Maybe<FunctionInputType<A>>) => Maybe<FunctionOutputType<A>>,
   or: (m: Maybe<A>) => Maybe<A>,
   orElse: (m: Maybe<A>) => Maybe<A>,
   default: (a: A) => Maybe<A>,
@@ -182,14 +177,13 @@ type MaybeType<M> = M extends Maybe<infer T> ? T : never;
 
 type MaybeTypeConstruct<A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>> =  { -readonly [P in keyof A]: MaybeType<A[P]> };
 
-type NonOptional<T> = T extends undefined ? never : T;
-
 const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
   maybe,
   tag: maybe.tag,
   value: I.toOptional(maybe),
   map: (fab) => map(fab, maybe),
   chain: (fab) => chain(fab, maybe),
+  apply: (v) => chain(apply(v), maybe),
   filter: (f) => MaybeConstructor(I.filter(f)(maybe)),
   fold: (f) => I.fold(f)(maybe),
   or: (other) => MaybeConstructor(I.or(maybe)(other.maybe)),
@@ -216,6 +210,10 @@ const chain = <A, B>(fab: (a: A) => Maybe<B>, m: I.Maybe<A>): Maybe<B> => {
     return MaybeConstructor(m);
   }
 };
+
+const apply = <A>(a: Maybe<FunctionInputType<A>>) => (f: A): Maybe<FunctionOutputType<A>> => a.map(
+  v => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
+);
 
 export const all = <T extends readonly Maybe<any>[] | []>(arr: T): Maybe<MaybeTypeConstruct<T>> => {
   return (arr as readonly Maybe<any>[]).reduce(
@@ -246,15 +244,13 @@ export const record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<M
   }, Just({})) as unknown as Maybe<MaybeTypeConstruct<R>>;
 };
 
-export const apply = <A extends readonly Maybe<any>[] | [], P extends any[] & MaybeTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Maybe<ReturnType<F>> => {
+export const applyAll = <A extends readonly Maybe<any>[] | [], P extends any[] & MaybeTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Maybe<ReturnType<F>> => {
   return Maybe.all(args)
     .map((args) => f(...args as Parameters<F>)) as Maybe<ReturnType<F>>;
 };
 
-export const applyTo = <A, B>(m: Maybe<A>) => (f: (a: A) => B): Maybe<B> => m.map(f);
-
-export const fromOptional = <A>(a: A | undefined): Maybe<NonOptional<A>> => MaybeConstructor(I.fromOptional(a));
-export const fromNullable = <A>(a: A | undefined | null): Maybe<NonNullable<A>> => MaybeConstructor(I.fromNullable(a));
+export const fromOptional = <A>(a: Optional<A>): Maybe<NonOptional<A>> => MaybeConstructor(I.fromOptional(a));
+export const fromNullable = <A>(a: Nullable<A>): Maybe<NonNullable<A>> => MaybeConstructor(I.fromNullable(a));
 export const fromNumber = (a: number): Maybe<number> => MaybeConstructor(I.fromNumber(a));
 export const join = <A>(m: Maybe<Maybe<A>>): Maybe<A> => m.chain(mm => mm);
 export const nth = <A>(index: number, arr: Array<A>): Maybe<A> => MaybeConstructor(I.nth(index, arr));
@@ -268,8 +264,6 @@ export const array = all;
 export const Maybe = {
   Just,
   Nothing,
-  applyTo,
-  apply,
   fromOptional,
   fromNullable,
   fromNumber,
@@ -284,5 +278,6 @@ export const Maybe = {
   some,
   values,
   record,
-  array
+  array,
+  applyAll,
 } as const;

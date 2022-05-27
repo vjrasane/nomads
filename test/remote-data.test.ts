@@ -344,45 +344,54 @@ describe('RemoteData', () => {
     });
   });
 
-  describe('applyTo', () => {
+  describe('apply', () => {
     it('success function applies to success value', () => {
-      const applied = Success((str: string) => parseInt(str, 10)).chain(RemoteData.applyTo(Success('42')));
+      const applied = Success((str: string) => parseInt(str, 10)).apply(Success('42'));
       expect(applied.remoteData).toEqual({ tag: 'success', data: 42 });
     });
 
     it('success function applies to failure', () => {
-      const applied = Success((str: string) => parseInt(str, 10)).chain(RemoteData.applyTo(Failure('error')));
+      const applied = Success((str: string) => parseInt(str, 10)).apply(Failure('error'));
       expect(applied.remoteData).toEqual({ tag: 'failure', error: 'error' });
     });
 
-    it('failure applies to success value', () => {
-      const applied = Failure('error').chain(RemoteData.applyTo(Success('42')));
+    it ('cannot apply success not containing a function', () => {
+      const applied = Success(0)
+        /* @ts-expect-error testing */
+        .apply(Success(42));
+      expect(applied.remoteData).toEqual({tag: 'success', data: 42 });
+    });
+
+    it('cannot apply failure to success value', () => {
+      const applied = Failure('error')
+      /* @ts-expect-error testing */
+        .apply(Success('42'));
       expect(applied.remoteData).toEqual({ tag: 'failure', error: 'error' });
     });
 
     it('failure value applies to failure', () => {
-      const applied = Failure('error').chain(RemoteData.applyTo(Failure('apply')));
+      const applied = Failure('error').apply(Failure('apply'));
       expect(applied.remoteData).toEqual({ tag: 'failure', error: 'error' });
     });
 
     it('loading applies to stand by', () => {
-      const applied = Loading.chain(RemoteData.applyTo(StandBy));
+      const applied = Loading.apply(StandBy);
       expect(applied.remoteData).toEqual({ tag: 'loading' });
     });
 
     it('applies a curried function multiple times to success values', () => {
       const applied = Success((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(RemoteData.applyTo(Success(1)))
-        .chain(RemoteData.applyTo(Success(2)))
-        .chain(RemoteData.applyTo(Success(3)));
+        .apply(Success(1))
+        .apply(Success(2))
+        .apply(Success(3));
       expect(applied.remoteData).toEqual({ tag: 'success', data: 6 });
     });
 
     it('applies a curried function multiple times to success and failure values', () => {
       const applied = Success((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(RemoteData.applyTo(Success(1)))
-        .chain(RemoteData.applyTo(Failure('error')))
-        .chain(RemoteData.applyTo(Success(3)));
+        .apply(Success(1))
+        .apply(Failure('error'))
+        .apply(Success(3));
       expect(applied.remoteData).toEqual({ tag: 'failure', error: 'error'  });
     });
   });
@@ -676,19 +685,19 @@ describe('RemoteData', () => {
     });
   });
 
-  describe('apply', () => {
+  describe('applyAll', () => {
     it ('applies function to array of successs', () => {
-      const applied = RemoteData.apply((a, b) => a + b, [Success(42), Success(69)]);
+      const applied = RemoteData.applyAll((a, b) => a + b, [Success(42), Success(69)]);
       expect(applied.remoteData).toEqual({tag: 'success', data: 111});
     });
 
     it ('applies function to array with one err', () => {
-      const applied = RemoteData.apply((a, b, c, d) => a + b + c + d, [Success(42), Failure('error'), Loading, StandBy]);
+      const applied = RemoteData.applyAll((a, b, c, d) => a + b + c + d, [Success(42), Failure('error'), Loading, StandBy]);
       expect(applied.remoteData).toEqual({tag: 'failure', error: 'error' });
     });
 
     it ('test typings', () => {
-      const applied = RemoteData.apply(
+      const applied = RemoteData.applyAll(
         (a: number, b: boolean, c: string) => [a,b,c] as const, 
         [Success(42), Success(true), Success('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);

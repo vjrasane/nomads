@@ -214,41 +214,58 @@ describe('Result', () => {
     });
   });
 
-  describe('applyTo', () => {
+  describe('apply', () => {
     it('ok function applies to ok value', () => {
-      const applied = Ok((str: string) => parseInt(str, 10)).chain(Result.applyTo(Ok('42')));
+      const applied = Ok((str: string) => parseInt(str, 10)).apply(Ok('42'));
       expect(applied.result).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('ok function applies to err', () => {
-      const applied = Ok((str: string) => parseInt(str, 10)).chain(Result.applyTo(Err('error')));
+      const applied = Ok((str: string) => parseInt(str, 10)).apply(Err('error'));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
 
-    it('err applies to ok value', () => {
-      const applied = Err('error').chain(Result.applyTo(Ok('42')));
+    it ('cannot apply ok not containing a function', () => {
+      const applied = Ok(0)
+        /* @ts-expect-error testing */
+        .apply(Ok(42));
+      expect(applied.result).toEqual({tag: 'ok', value: 42 });
+    });
+
+    it('cannot apply err to ok value', () => {
+      const applied = Err('error')
+      /* @ts-expect-error testing */
+        .apply(Ok('42'));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
 
-    it('erro value applies to err', () => {
-      const applied = Err('error').chain(Result.applyTo(Err('apply')));
+    it('err value applies to err', () => {
+      const applied = Err('error').apply(Err('apply'));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('applies a curried function multiple times to ok values', () => {
-      const applied = Ok((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(Result.applyTo(Ok(1)))
-        .chain(Result.applyTo(Ok(2)))
-        .chain(Result.applyTo(Ok(3)));
-      expect(applied.result).toEqual({ tag: 'ok', value: 6 });
+      const applied = Ok((a: number) => (b: number) => (c: number) => a + b * c)
+        .apply(Ok(1))
+        .apply(Ok(2))
+        .apply(Ok(3));
+      expect(applied.result).toEqual({ tag: 'ok', value: 7 });
     });
 
     it('applies a curried function multiple times to ok and err values', () => {
       const applied = Ok((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(Result.applyTo(Ok(1)))
-        .chain(Result.applyTo(Err('error')))
-        .chain(Result.applyTo(Ok(3)));
+        .apply(Ok(1))
+        .apply(Err('error'))
+        .apply(Ok(3));
       expect(applied.result).toEqual({ tag: 'err', error: 'error' });
+    });
+
+    it('autocurries function', () => {
+      const applied = Ok((a: number, b: number, c: number) => a + b * c)
+        .apply(Ok(1))
+        .apply(Ok(2))
+        .apply(Ok(3));
+      expect(applied.result).toEqual({ tag: 'ok', value: 7 });
     });
   });
 
@@ -487,19 +504,19 @@ describe('Result', () => {
     });
   });
 
-  describe('apply', () => {
+  describe('applyAll', () => {
     it ('applies function to array of oks', () => {
-      const applied = Result.apply((a, b) => a + b, [Ok(42), Ok(69)]);
+      const applied = Result.applyAll((a, b) => a + b, [Ok(42), Ok(69)]);
       expect(applied.result).toEqual({tag: 'ok', value: 111});
     });
 
     it ('applies function to array with one err', () => {
-      const applied = Result.apply((a, b) => a + b, [Ok(42), Err('error')]);
+      const applied = Result.applyAll((a, b) => a + b, [Ok(42), Err('error')]);
       expect(applied.result).toEqual({tag: 'err', error: 'error' });
     });
 
     it ('test typings', () => {
-      const applied = Result.apply(
+      const applied = Result.applyAll(
         (a: number, b: boolean, c: string) => [a,b,c] as const, 
         [Ok(42), Ok(true), Ok('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);

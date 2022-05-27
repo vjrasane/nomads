@@ -332,59 +332,77 @@ describe('Task', () => {
     });
   });
 
-  describe('applyTo', () => {
+  describe('apply', () => {
     it('function applies to resolving task', async () => {
-      const result = await Task.resolve((str: string) => parseInt(str, 10)).chain(Task.applyTo(Task.resolve('42'))).fork();
+      const result = await Task.resolve((str: string) => parseInt(str, 10)).apply(Task.resolve('42')).fork();
       expect(result.value).toEqual(42);
     });
 
     it('function applies to rejecting task', async () => {
-      const result = await Task.resolve((str: string) => parseInt(str, 10)).chain(Task.applyTo(Task.reject('error'))).fork();
+      const result = await Task.resolve((str: string) => parseInt(str, 10)).apply(Task.reject('error')).fork();
       expect(result.error).toEqual('error');
     });
 
-    it('rejecting task applies to resolving task', async () => {
-      const result = await Task.reject('error').chain(Task.applyTo(Task.resolve('42'))).fork();
+    it ('cannot apply task not containing a function', async () => {
+      const result = await Task.resolve(0)
+        /* @ts-expect-error testing */
+        .apply(Task.resolve(42)).fork();
+      expect(result.value).toEqual(42);
+    });
+
+    it('cannot apply rejecting task to resolving task', async () => {
+      const result = await Task.reject('error')
+        /* @ts-expect-error testing */
+        .apply(Task.resolve('42')).fork();
       expect(result.error).toEqual('error');
     });
 
     it('rejecting task applies to rejecting task', async () => {
-      const result = await Task.reject('first').chain(Task.applyTo(Task.reject('second'))).fork();
+      const result = await Task.reject('first').apply(Task.reject('second')).fork();
       expect(result.error).toEqual('first');
     });
 
     it('applies a curried function multiple times to resolving values', async () => {
-      const applied = await Task.resolve((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(Task.applyTo(Task.resolve(1)))
-        .chain(Task.applyTo(Task.resolve(2)))
-        .chain(Task.applyTo(Task.resolve(3)))
+      const applied = await Task.resolve((a: number) => (b: number) => (c: number) => a + b * c)
+        .apply(Task.resolve(1))
+        .apply(Task.resolve(2))
+        .apply(Task.resolve(3))
         .fork();
-      expect(applied.value).toEqual(6);
+      expect(applied.value).toEqual(7);
     });
 
     it('applies a curried function multiple times to resolving and rejecting values', async () => {
       const applied = await Task.resolve((a: number) => (b: number) => (c: number) => a + b + c)
-        .chain(Task.applyTo(Task.resolve(1)))
-        .chain(Task.applyTo(Task.reject('error')))
-        .chain(Task.applyTo(Task.resolve(3)))
+        .apply(Task.resolve(1))
+        .apply(Task.reject('error'))
+        .apply(Task.resolve(3))
         .fork();
       expect(applied.error).toEqual('error');
     });
+
+    it('autocurries function', async () => {
+      const applied = await Task.resolve((a: number, b: number, c: number) => a + b * c)
+        .apply(Task.resolve(1))
+        .apply(Task.resolve(2))
+        .apply(Task.resolve(3))
+        .fork();
+      expect(applied.value).toEqual(7);
+    });
   });
 
-  describe('apply', () => {
+  describe('applyAll', () => {
     it ('applies function to array of resolving tasks', async () => {
-      const result = await Task.apply((a, b) => a + b, [Task.resolve(42), Task.resolve(69)]).fork();
+      const result = await Task.applyAll((a, b) => a + b, [Task.resolve(42), Task.resolve(69)]).fork();
       expect(result.value).toEqual(111);
     });
 
     it ('applies function to array with one rejecting task', async () => {
-      const result = await Task.apply((a, b) => a + b, [Task.resolve(42), Task.reject('error')]).fork();
+      const result = await Task.applyAll((a, b) => a + b, [Task.resolve(42), Task.reject('error')]).fork();
       expect(result.error).toEqual('error');
     });
 
     it ('test typings', async () => {
-      const result = await Task.apply(
+      const result = await Task.applyAll(
         (a: number, b: boolean, c: string) => [a,b,c] as const, 
         [Task.resolve(42), Task.resolve(true), Task.resolve('str')])
         .fork();
