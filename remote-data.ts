@@ -205,7 +205,7 @@ export const Loading: RemoteData<any, any> = RemoteDataConstructor(I.Loading);
 export const StandBy: RemoteData<any, any> = RemoteDataConstructor(I.StandBy);
 
 export const apply = <A extends readonly RemoteData<any, any>[] | [], P extends any[] & RemoteDataTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): RemoteData<ErrorType<A[keyof A]>, ReturnType<F>> => {
-  return RemoteData.all(args) .map((args) => f(...args as Parameters<F>)) as RemoteData<ErrorType<A[keyof A]>, ReturnType<F>>;
+  return RemoteData.all(args).map((args) => f(...args as Parameters<F>)) as RemoteData<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
 
 export const applyTo = <E, A, B>(r: RemoteData<E, A>) => (f: (a: A) => B): RemoteData<E, B> => r.map(f);

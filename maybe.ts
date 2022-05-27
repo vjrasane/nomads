@@ -127,23 +127,22 @@ namespace I {
     }
   };
 
-  export const fromOptional = <A>(a: A | undefined): Maybe<A> => {
-    switch (a) {
-    case undefined:
-      return Nothing;
-    default:
-      return Just(a);
-    }
+  const isNonOptional = <A>(a: A): a is NonOptional<A> => {
+    return a !== undefined;
   };
 
-  export const fromNullable = <A>(a: A | null | undefined): Maybe<A> => {
-    switch (a) {
-    case undefined:
-    case null:
-      return Nothing;
-    default:
-      return Just(a);
-    }
+  const isNonNullable = <A>(a: A): a is NonNullable<A> => {
+    return a != null;
+  };
+
+  export const fromOptional = <A>(a: A | undefined): Maybe<NonOptional<A>> => {
+    if (isNonOptional(a)) return Just(a);
+    return Nothing;
+  };
+
+  export const fromNullable = <A>(a: A | null | undefined): Maybe<NonNullable<A>> => {
+    if (isNonNullable(a)) return Just(a);
+    return Nothing;
   };
 
   export const fromNumber = (a: number): Maybe<number> => {
@@ -179,13 +178,11 @@ export interface Maybe<A> {
   appendTo: <T>(arr: Array<T | A>) => Array<T | A>
 }
 
-type Optional<A> = A | undefined;
-
-type Nullable<A> = Optional<A> | null;
-
 type MaybeType<M> = M extends Maybe<infer T> ? T : never;
 
 type MaybeTypeConstruct<A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>> =  { -readonly [P in keyof A]: MaybeType<A[P]> };
+
+type NonOptional<T> = T extends undefined ? never : T;
 
 const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
   maybe,
@@ -256,8 +253,8 @@ export const apply = <A extends readonly Maybe<any>[] | [], P extends any[] & Ma
 
 export const applyTo = <A, B>(m: Maybe<A>) => (f: (a: A) => B): Maybe<B> => m.map(f);
 
-export const fromOptional = <A>(a: Optional<A>): Maybe<A> => MaybeConstructor(I.fromOptional(a));
-export const fromNullable = <A>(a: Nullable<A>): Maybe<A> => MaybeConstructor(I.fromNullable(a));
+export const fromOptional = <A>(a: A | undefined): Maybe<NonOptional<A>> => MaybeConstructor(I.fromOptional(a));
+export const fromNullable = <A>(a: A | undefined | null): Maybe<NonNullable<A>> => MaybeConstructor(I.fromNullable(a));
 export const fromNumber = (a: number): Maybe<number> => MaybeConstructor(I.fromNumber(a));
 export const join = <A>(m: Maybe<Maybe<A>>): Maybe<A> => m.chain(mm => mm);
 export const nth = <A>(index: number, arr: Array<A>): Maybe<A> => MaybeConstructor(I.nth(index, arr));
