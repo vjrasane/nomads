@@ -13,7 +13,7 @@ describe('RemoteData', () => {
     expect(success.getError().get()).toBe(undefined);
     expect(success.getData().get()).toBe(42);
   });
-	
+
   it('Failure', () => {
     const fail = Failure('error');
     expect(fail.remoteData).toEqual({ tag: 'failure', error: 'error' });
@@ -50,7 +50,7 @@ describe('RemoteData', () => {
       const mapped = Success(42).map((num) => num * 2);
       expect(mapped.remoteData).toEqual({ tag: 'success', data: 84 });
     });
-  
+
     it('maps failure value', () => {
       const mapped = Failure('error').map((num) => num * 2);
       expect(mapped.remoteData).toEqual({ tag: 'failure', error: 'error' });
@@ -72,7 +72,7 @@ describe('RemoteData', () => {
       const mapped = Success(42).mapError((str) => str.toUpperCase());
       expect(mapped.remoteData).toEqual({ tag: 'success', data: 42 });
     });
-  
+
     it('maps failure value', () => {
       const mapped = Failure('error').mapError((str) => str.toUpperCase());
       expect(mapped.remoteData).toEqual({ tag: 'failure', error: 'ERROR' });
@@ -94,7 +94,7 @@ describe('RemoteData', () => {
       const mapped = Success(42).chain((num) => Success(num * 2));
       expect(mapped.remoteData).toEqual({ tag: 'success', data: 84 });
     });
-  
+
     it('chains failure value', () => {
       const mapped = Failure('error').chain((num) => Success(num * 2));
       expect(mapped.remoteData).toEqual({ tag: 'failure', error: 'error' });
@@ -698,7 +698,7 @@ describe('RemoteData', () => {
 
     it ('test typings', () => {
       const applied = RemoteData.applyAll(
-        (a: number, b: boolean, c: string) => [a,b,c] as const, 
+        (a: number, b: boolean, c: string) => [a,b,c] as const,
         [Success(42), Success(true), Success('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);
       expect([num, bool, str]).toEqual([42, true, 'str']);
