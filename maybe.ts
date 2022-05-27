@@ -184,17 +184,21 @@ type Nullable<A> = Optional<A> | null;
 
 type MaybeType<M> = M extends Maybe<infer T> ? T : never;
 
+type MaybeArray<A extends any[]> = { -readonly [P in keyof A]: Maybe<A[P]> }
+
+type MaybeTypeConstruct<A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>> =  { -readonly [P in keyof A]: MaybeType<A[P]> };
+
 const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
   maybe,
   tag: maybe.tag,
   value: I.toOptional(maybe),
   map: (fab) => map(fab, maybe),
   chain: (fab) => chain(fab, maybe),
-  filter: (f) => apply(I.filter(f), maybe),
+  filter: (f) => MaybeConstructor(I.filter(f)(maybe)),
   fold: (f) => I.fold(f)(maybe),
-  or: (other) => apply(I.or(maybe), other.maybe),
-  orElse: (other) => apply(I.orElse(maybe), other.maybe),
-  default: (def) =>  apply(I.defaultTo(def), maybe),
+  or: (other) => MaybeConstructor(I.or(maybe)(other.maybe)),
+  orElse: (other) => MaybeConstructor(I.orElse(maybe)(other.maybe)),
+  default: (def) =>  MaybeConstructor(I.defaultTo(def)(maybe)),
   toResult: <E>(err: E) => I.toResult<E, A>(err)(maybe),
   toString: () => I.toString(maybe),
   get: () => I.toOptional(maybe),
@@ -207,8 +211,7 @@ export const Just = <A>(v: A): Maybe<A> => MaybeConstructor(I.Just(v));
 
 export const Nothing: Maybe<any> = MaybeConstructor(I.Nothing);
 
-const apply = <A, B>(f: (ra: I.Maybe<A>) => I.Maybe<B>, m: I.Maybe<A>): Maybe<B> => MaybeConstructor(f(m));
-const map = <A, B>(fab: (a: A) => B, m: I.Maybe<A>): Maybe<B> => apply(I.map(fab), m);
+const map = <A, B>(fab: (a: A) => B, m: I.Maybe<A>): Maybe<B> => MaybeConstructor(I.map(fab)(m));
 const chain = <A, B>(fab: (a: A) => Maybe<B>, m: I.Maybe<A>): Maybe<B> => {
   switch(m.tag) {
   case 'just':
@@ -218,13 +221,13 @@ const chain = <A, B>(fab: (a: A) => Maybe<B>, m: I.Maybe<A>): Maybe<B> => {
   }
 };
 
-export const all = <T extends readonly Maybe<any>[] | []>(arr: T): Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }> => {
+export const all = <T extends readonly Maybe<any>[] | []>(arr: T): Maybe<MaybeTypeConstruct<T>> => {
   return (arr as readonly Maybe<any>[]).reduce(
-    (acc: Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }>, curr): Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }> => {
+    (acc: Maybe<MaybeTypeConstruct<T>>, curr): Maybe<MaybeTypeConstruct<T>> => {
       return acc.chain(
-        a => curr.map((v) => [...(a as readonly unknown[]), v ] as unknown as { -readonly [P in keyof T]: MaybeType<T[P]> })
+        a => curr.map((v) => [...(a as readonly unknown[]), v ] as unknown as MaybeTypeConstruct<T>)
       );
-    }, Just([] as unknown as { -readonly [P in keyof T]: MaybeType<T[P]> })) as Maybe<{ -readonly [P in keyof T]: MaybeType<T[P]> }>;
+    }, Just([] as unknown as MaybeTypeConstruct<T>)) as Maybe<MaybeTypeConstruct<T>>;
 };
 
 export const some = <A extends Array<Maybe<any>>>(arr: A): Maybe<MaybeType<A[number]>> => {
@@ -241,10 +244,15 @@ export const values = <A extends Array<Maybe<any>>>(arr: A): Array<MaybeType<A[n
     }), []);
 };
 
-export const record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<{ -readonly [P in keyof R]: MaybeType<R[P]> }> => {
-  return Object.entries(record).reduce((acc, [key, value]): Maybe<Partial<{ [P in keyof R]: MaybeType<R[P]> }>> => {
+export const record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<MaybeTypeConstruct<R>> => {
+  return Object.entries(record).reduce((acc, [key, value]): Maybe<Partial<MaybeTypeConstruct<R>>> => {
     return acc.chain((a) => value.map((v) => ({ ...a, [key]: v })));
-  }, Just({})) as unknown as Maybe<{ [P in keyof R]: MaybeType<R[P]> }>;
+  }, Just({})) as unknown as Maybe<MaybeTypeConstruct<R>>;
+};
+
+export const apply = <F extends (...args: any[]) => any, A extends MaybeArray<Parameters<F>>>(f: F, args: A): Maybe<ReturnType<F>> => {
+  return Maybe.all(args as unknown as Maybe<any>[])
+    .map((args) => f(...args)) as Maybe<ReturnType<F>>;
 };
 
 export const applyTo = <A, B>(m: Maybe<A>) => (f: (a: A) => B): Maybe<B> => m.map(f);
@@ -265,6 +273,7 @@ export const Maybe = {
   Just,
   Nothing,
   applyTo,
+  apply,
   fromOptional,
   fromNullable,
   fromNumber,
@@ -279,5 +288,5 @@ export const Maybe = {
   some,
   values,
   record,
-  array,
+  array
 } as const;

@@ -5,9 +5,9 @@ namespace I {
 
   export const Task = <A>(f: () => Promise<A>): Task<any, A> => () => f().then(Ok).catch(Err);
 
-  export const map = <A, B, E>(fab: (a: A) => B) => (t: Task<E, A>): Task<E, B> => () => t().then(r => r.map(fab));
+  export const map = <E, A, B>(fab: (a: A) => B) => (t: Task<E, A>): Task<E, B> => () => t().then(r => r.map(fab));
 
-  export const mapError = <A, E, F>(feb: (e: E) => F) => (t: Task<E, A>): Task<F, A> => () => t().then(r => r.mapError(feb));
+  export const mapError = <E, A, F>(feb: (e: E) => F) => (t: Task<E, A>): Task<F, A> => () => t().then(r => r.mapError(feb));
 }
 
 export interface Task<E, A> {
@@ -21,17 +21,22 @@ export interface Task<E, A> {
 
 type TaskType<T> = T extends Task<any, infer A> ? A : never;
 
+type ErrorType<T> = T extends Task<infer E, any> ? E : never; 
+
+type TaskArray<A extends any[]> = { -readonly [P in keyof A]: Task<any, A[P]> } 
+
+type TaskTypeConstruct<A extends readonly Task<any, any>[] | Record<string | symbol | number, Task<any, any>>> =  { -readonly [P in keyof A]: TaskType<A[P]> };
+
 const TaskConstructor = <E, A>(task: I.Task<E, A>): Task<E, A> => ({
   task,
   tag: 'task',
   fork: () => task(),
   map: (fab) => map(fab, task),
-  mapError: (fef) => apply(I.mapError(fef), task),
+  mapError: <F>(fef: (e: E) => F) => TaskConstructor(I.mapError<E, A, F>(fef)(task)),
   chain: (fab) => chain(fab, task)
 });
 
-const apply = <A, B, E, F>(f: (t: I.Task<E, A>) => I.Task<F, B>, t: I.Task<E, A>): Task<F, B> => TaskConstructor(f(t));
-const map = <E, A, B>(fab: (a: A) => B, t: I.Task<E, A>): Task<E, B> => apply(I.map(fab), t);
+const map = <E, A, B>(fab: (a: A) => B, t: I.Task<E, A>): Task<E, B> => TaskConstructor(I.map<E, A, B>(fab)(t));
 const chain = <E, A, B>(fab: (a: A) => Task<E, B>, t: I.Task<E, A>): Task<E, B> => TaskConstructor(
   async (): Promise<Result<E, B>> => {
     const { result } = await t();
@@ -60,32 +65,38 @@ const promiseRecord = <R extends Record<string, Promise<any>>>(record: R): Promi
       }), {}
     ) as { [P in keyof R]: Awaited<R[P]> });
   
-export const of = <A>(f: () => Promise<A>): Task<any, A> => TaskConstructor(I.Task(f));
 export const reject = <E, A = any>(err: E): Task<E, A> => TaskConstructor(() => Promise.resolve(Result.Err(err)));
-export const resolve = <A, E = any>(value: A): Task<E, A> => of(() => Promise.resolve(value));
+export const resolve = <A, E = any>(value: A): Task<E, A> => TaskConstructor(() => Promise.resolve(Result.Ok(value)));
 export const join = <E, A>(t: Task<E, Task<E, A>>): Task<E, A> => t.chain(t => t);
 
-export const all =  <T extends readonly Task<E, any>[] | [], E = any>(arr: T): Task<E, { -readonly [P in keyof T]: TaskType<T[P]> }> => 
+export const apply = <F extends (...args: any[]) => any, A extends Parameters<F>>(f: F, args: TaskArray<A>): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
+  return Task.all(args as unknown as Task<any, any>[]).map((args) => f(...args)) as Task<ErrorType<A[keyof A]>, ReturnType<F>>;
+};
+
+export const applyTo = <E, A, B>(r: Task<E, A>) => (f: (a: A) => B): Task<E, B> => r.map(f);
+
+export const all =  <T extends readonly Task<any, any>[] | []>(arr: T): Task<ErrorType<T[keyof T]>, TaskTypeConstruct<T>> => 
   TaskConstructor(
-    () =>  Promise.all(arr.map(t => t.fork()))
-      .then(Result.all) as unknown as Promise<Result<E, { -readonly [P in keyof T]: TaskType<T[P]> }>>
+    () =>  Promise.all(arr.map((t: Task<any, any>) => t.fork()))
+      .then(Result.all) as Promise<Result<ErrorType<T[keyof T]>, TaskTypeConstruct<T>>>
   );
 
 export const array = all;
 
-export const record = <R extends Record<string, Task<E, any>>, E = any>(record: R): Task<E, { -readonly [P in keyof R]: TaskType<R[P]> }> => 
+export const record = <R extends Record<string | number | symbol, Task<any, any>>>(record: R): Task<ErrorType<R[keyof R]>, TaskTypeConstruct<R>> => 
   TaskConstructor(
     () => promiseRecord(
       mapValues((value) => value.fork(), record)
-    ).then(Result.record) as Promise<Result<E, { [P in keyof R]: TaskType<R[P]> }>>
+    ).then(Result.record) as Promise<Result<ErrorType<R[keyof R]>, TaskTypeConstruct<R>>>
   );
 
-export const Task = ({
-  of,
-  reject,
-  resolve,
-  join,
-  all,
-  array,
-  record
-}) as const; 
+export const Task = <A>(f: () => Promise<A>): Task<any, A> => TaskConstructor(I.Task(f));
+
+Task.reject = reject;
+Task.resolve = resolve;
+Task.join = join;
+Task.all = all;
+Task.array = array;
+Task.record = record;
+Task.apply = apply;
+Task.applyTo = applyTo;

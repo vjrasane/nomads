@@ -617,4 +617,24 @@ describe('Maybe', () => {
       expect(Nothing.appendTo([1,2,3])).toEqual([1, 2, 3]);
     });
   });
+
+  describe('apply', () => {
+    it ('applies function to array of justs', () => {
+      const applied = Maybe.apply((a, b) => a + b, [Just(42), Just(69)]);
+      expect(applied.maybe).toEqual({tag: 'just', value: 111});
+    });
+
+    it ('applies function to array with one nothing', () => {
+      const applied = Maybe.apply((a, b) => a + b, [Just(42), Nothing]);
+      expect(applied.maybe).toEqual({tag: 'nothing' });
+    });
+
+    it ('test typings', () => {
+      const applied = Maybe.apply(
+        (a: number, b: boolean, c: string) => [a,b,c] as const, 
+        [Just(42), Just(true), Just('str')]);
+      const [num, bool, str] = applied.getOrElse([0, false, '']);
+      expect([num, bool, str]).toEqual([42, true, 'str']);
+    });
+  });
 });

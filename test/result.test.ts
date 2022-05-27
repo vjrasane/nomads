@@ -467,7 +467,6 @@ describe('Result', () => {
     });
   });
 
-
   describe('values', () => {
     it('gets values from array with oks', () => {
       expect(
@@ -485,6 +484,26 @@ describe('Result', () => {
       expect(
         Result.values([])
       ).toEqual([]);
+    });
+  });
+
+  describe('apply', () => {
+    it ('applies function to array of oks', () => {
+      const applied = Result.apply((a, b) => a + b, [Ok(42), Ok(69)]);
+      expect(applied.result).toEqual({tag: 'ok', value: 111});
+    });
+
+    it ('applies function to array with one err', () => {
+      const applied = Result.apply((a, b) => a + b, [Ok(42), Err('error')]);
+      expect(applied.result).toEqual({tag: 'err', error: 'error' });
+    });
+
+    it ('test typings', () => {
+      const applied = Result.apply(
+        (a: number, b: boolean, c: string) => [a,b,c] as const, 
+        [Ok(42), Ok(true), Ok('str')]);
+      const [num, bool, str] = applied.getOrElse([0, false, '']);
+      expect([num, bool, str]).toEqual([42, true, 'str']);
     });
   });
 });

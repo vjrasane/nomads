@@ -1,5 +1,5 @@
-import { Just, Maybe } from '../../maybe';
-import { Result } from '../../result';
+import { Just, Maybe } from '../maybe';
+import { Result } from '../result';
 import { Lens } from './lens';
 import { Prism } from './prism';
 
