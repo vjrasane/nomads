@@ -1,3 +1,4 @@
+
 import { Err, Ok, Result } from './result';
 
 namespace I {
@@ -184,8 +185,6 @@ type Nullable<A> = Optional<A> | null;
 
 type MaybeType<M> = M extends Maybe<infer T> ? T : never;
 
-type MaybeArray<A extends any[]> = { -readonly [P in keyof A]: Maybe<A[P]> }
-
 type MaybeTypeConstruct<A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>> =  { -readonly [P in keyof A]: MaybeType<A[P]> };
 
 const MaybeConstructor = <A>(maybe: I.Maybe<A>): Maybe<A> => ({
@@ -250,9 +249,9 @@ export const record = <R extends Record<string, Maybe<any>>>(record: R): Maybe<M
   }, Just({})) as unknown as Maybe<MaybeTypeConstruct<R>>;
 };
 
-export const apply = <F extends (...args: any[]) => any, A extends MaybeArray<Parameters<F>>>(f: F, args: A): Maybe<ReturnType<F>> => {
-  return Maybe.all(args as unknown as Maybe<any>[])
-    .map((args) => f(...args)) as Maybe<ReturnType<F>>;
+export const apply = <A extends readonly Maybe<any>[] | [], P extends any[] & MaybeTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Maybe<ReturnType<F>> => {
+  return Maybe.all(args)
+    .map((args) => f(...args as Parameters<F>)) as Maybe<ReturnType<F>>;
 };
 
 export const applyTo = <A, B>(m: Maybe<A>) => (f: (a: A) => B): Maybe<B> => m.map(f);

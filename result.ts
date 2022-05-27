@@ -158,8 +158,6 @@ type ResultType<R> = R extends Result<any, infer T> ? T : never;
 
 type ErrorType<R> = R extends Result<infer T, any> ? T : never;
 
-type ResultArray<A extends any[]> = { -readonly [P in keyof A]: Result<any, A[P]> } 
-
 type ResultTypeConstruct<A extends readonly Result<any, any>[] | Record<string | symbol | number, Result<any, any>>> =  { -readonly [P in keyof A]: ResultType<A[P]> };
 
 const ResultConstructor = <E, A>(result: I.Result<E, A>): Result<E, A> => ({
@@ -196,8 +194,8 @@ const chain = <E, A, B>(fab: (a: A) => Result<E, B>, r: I.Result<E, A>): Result<
 export const Ok = <A>(value: A): Result<any, A> => ResultConstructor(I.Ok(value));
 export const Err = <E>(error: E): Result<E, any> => ResultConstructor(I.Err(error));
 
-export const apply = <F extends (...args: any[]) => any, A extends Parameters<F>>(f: F, args: ResultArray<A>): Result<ErrorType<A[keyof A]>, ReturnType<F>> => {
-  return Result.all(args as unknown as Result<any, any>[]) .map((args) => f(...args)) as Result<ErrorType<A[keyof A]>, ReturnType<F>>;
+export const apply = <A extends readonly Result<any, any>[] | [], P extends any[] & ResultTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Result<ErrorType<A[keyof A]>, ReturnType<F>> => {
+  return Result.all(args) .map((args) => f(...args as Parameters<F>)) as Result<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
 
 export const applyTo = <E, A, B>(r: Result<E, A>) => (f: (a: A) => B): Result<E, B> => r.map(f);

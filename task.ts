@@ -23,8 +23,6 @@ type TaskType<T> = T extends Task<any, infer A> ? A : never;
 
 type ErrorType<T> = T extends Task<infer E, any> ? E : never; 
 
-type TaskArray<A extends any[]> = { -readonly [P in keyof A]: Task<any, A[P]> } 
-
 type TaskTypeConstruct<A extends readonly Task<any, any>[] | Record<string | symbol | number, Task<any, any>>> =  { -readonly [P in keyof A]: TaskType<A[P]> };
 
 const TaskConstructor = <E, A>(task: I.Task<E, A>): Task<E, A> => ({
@@ -69,8 +67,8 @@ export const reject = <E, A = any>(err: E): Task<E, A> => TaskConstructor(() => 
 export const resolve = <A, E = any>(value: A): Task<E, A> => TaskConstructor(() => Promise.resolve(Result.Ok(value)));
 export const join = <E, A>(t: Task<E, Task<E, A>>): Task<E, A> => t.chain(t => t);
 
-export const apply = <F extends (...args: any[]) => any, A extends Parameters<F>>(f: F, args: TaskArray<A>): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
-  return Task.all(args as unknown as Task<any, any>[]).map((args) => f(...args)) as Task<ErrorType<A[keyof A]>, ReturnType<F>>;
+export const apply = <A extends readonly Task<any, any>[] | [], P extends any[] & TaskTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
+  return Task.all(args) .map((args) => f(...args as Parameters<F>)) as Task<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
 
 export const applyTo = <E, A, B>(r: Task<E, A>) => (f: (a: A) => B): Task<E, B> => r.map(f);
