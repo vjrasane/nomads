@@ -65,6 +65,12 @@ const promiseRecord = <R extends Record<string, Promise<any>>>(record: R): Promi
   
 export const reject = <E, A = any>(err: E): Task<E, A> => TaskConstructor(() => Promise.resolve(Result.Err(err)));
 export const resolve = <A, E = any>(value: A): Task<E, A> => TaskConstructor(() => Promise.resolve(Result.Ok(value)));
+
+export const sleep = (ms: number): Task<any, undefined> => TaskConstructor(
+  () => new Promise(resolve => setTimeout(
+    () => resolve(Result.Ok(undefined)), ms))
+);
+
 export const join = <E, A>(t: Task<E, Task<E, A>>): Task<E, A> => t.chain(t => t);
 
 export const apply = <A extends readonly Task<any, any>[] | [], P extends any[] & TaskTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
@@ -92,6 +98,7 @@ export const Task = <A>(f: () => Promise<A>): Task<any, A> => TaskConstructor(I.
 
 Task.reject = reject;
 Task.resolve = resolve;
+Task.sleep = sleep;
 Task.join = join;
 Task.all = all;
 Task.array = array;

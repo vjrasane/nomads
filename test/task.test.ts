@@ -392,4 +392,27 @@ describe('Task', () => {
       expect([num, bool, str]).toEqual([42, true, 'str']);
     });
   });
+
+  describe('sleep', () => {
+    it('sleeps for one second and resolves with nothing', async () => {
+      const promise = Task.sleep(1000).fork();
+      jest.advanceTimersByTime(1000);
+      const result = await promise;
+      expect(result.tag).toBe('ok');
+    });
+
+    it('map to resolve with value', async () => {
+      const promise = Task.sleep(1000).map(() => 42).fork();
+      jest.advanceTimersByTime(1000);
+      const result = await promise;
+      expect(result.value).toBe(42);
+    });
+
+    it('chain to reject with error', async () => {
+      const promise = Task.sleep(1000).chain(() => Task.reject('error')).fork();
+      jest.advanceTimersByTime(1000);
+      const result = await promise;
+      expect(result.error).toBe('error');
+    });
+  });
 });
