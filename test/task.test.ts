@@ -13,6 +13,87 @@ describe('Task', () => {
     expect(Task.resolve(42).tag).toBe('task');
   });
 
+  describe('functor laws', () => {
+    it('identity', async () => {
+      const left = await Task.resolve(42).map((v) => v).fork();
+      const right = await Task.resolve(42).fork();
+      expect(left.value).toEqual(right.value);
+    });
+
+    it('composition', async () => {
+      const f = (v: number) => v * 2;
+      const g = (v: number) => v + 2;
+      const left = await Task.resolve(42).map(f).map(g).fork();
+      const right = await Task.resolve(42).map(v => g(f(v))).fork();
+      expect(left.value).toEqual(right.value);
+    });
+  });
+
+  describe('applicative laws', () => {
+    it('identity', async () => {
+      const left = await Task.resolve((v: number) => v).apply(Task.resolve(42)).fork()
+      const right = await Task.resolve(42).fork();
+      expect(left.value).toEqual(right.value);
+    });
+
+    it('homomorphism', async () => {
+      const f = (v: number) => v * 2;
+      const left = await Task.resolve(f).apply(Task.resolve(42)).fork();
+      const right = await Task.resolve(f(42)).fork();
+      expect(left.value).toEqual(right.value);
+    });
+
+    it('interchange', async () => {
+      const f = (v: number) => v * 2;
+      const left = await Task.resolve(f).apply(Task.resolve(42)).fork();
+      const right = await Task.resolve((g: typeof f) => g(42)).apply(Task.resolve(f)).fork();
+      expect(left.value).toEqual(right.value);
+    });
+
+    it('composition', async () => {
+      const u = Task.resolve((b: boolean) => [b]);
+      const v = Task.resolve((a: number) => a > 0);
+      const w = Task.resolve(42);
+      const compose = (f: (b: boolean) => Array<boolean>) =>
+        (g: (a: number) => boolean) =>
+          (a: number): Array<boolean> =>
+            f(g(a));
+      const left = await Task.resolve(compose)
+        .apply(u)
+        .apply(v)
+        .apply(w)
+        .fork();
+      const right = await u.apply(v.apply(w)).fork();
+      expect(left.value).toEqual(right.value);
+    });
+  });
+
+  describe('monad laws', () => {
+    it('left identity', async () => {
+      const ret = <A>(n: A) => Task.resolve(n);
+      const f = (n: number) => Task.resolve(n * 2);
+      const left = await ret(42).chain(f).fork();
+      const right = await f(42).fork();
+      expect(left.value).toEqual(right.value);
+    });
+
+    it('right identity',async () => {
+      const ret = <A>(n: A) => Task.resolve(n);
+      const left = await Task.resolve(42).chain(ret).fork();
+      const right = await Task.resolve(42).fork();
+      expect(left.value).toEqual(right.value);
+    });
+
+    it('associativity', async() => {
+      const m = Task.resolve(42);
+      const f = (n: number) => Task.resolve(n + 2);
+      const g = (n: number) => Task.resolve(n * 2);
+      const left = await m.chain(f).chain(g).fork();
+      const right = await  m.chain((v) => f(v).chain(g)).fork();
+      expect(left.value).toEqual(right.value);
+    });
+  });
+
   describe('fork', () => {
     it('only runs promise when fork is called', async () => {
       const resolver = jest.fn().mockImplementationOnce(() => 42);

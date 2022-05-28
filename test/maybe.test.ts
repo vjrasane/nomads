@@ -51,12 +51,12 @@ describe('Maybe', () => {
     });
 
     it('composition', () => {
-      const u = Just((b: number) => b + 2);
-      const v = Just((a: number) => a * 2);
+      const u = Just((b: boolean) => [b]);
+      const v = Just((a: number) => a > 0);
       const w = Just(42);
-      const compose = (f: (b: number) => number) =>
-        (g: (a: number) => number) =>
-          (a: number): number =>
+      const compose = (f: (b: boolean) => Array<boolean>) =>
+        (g: (a: number) => boolean) =>
+          (a: number): Array<boolean> =>
             f(g(a));
       const left = Just(compose)
         .apply(u)

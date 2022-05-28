@@ -24,6 +24,84 @@ describe('Result', () => {
     expect(err.getValue().get()).toBe(undefined);
   });
 
+  describe('functor laws', () => {
+    it('identity', () => {
+      expect(Ok(42).map((v) => v).result).toEqual(Ok(42).result);
+    });
+
+    it('composition', () => {
+      const f = (v: number) => v * 2;
+      const g = (v: number) => v + 2;
+      expect(Ok(42).map(f).map(g).result).toEqual(
+        Ok(42).map((v) => g(f(v))).result
+      );
+    });
+  });
+
+  describe('applicative laws', () => {
+    it('identity', () => {
+      const left = Ok((v: number) => v).apply(Ok(42));
+      const right = Ok(42);
+      expect(left.result).toEqual(right.result);
+    });
+
+    it('homomorphism', () => {
+      const f = (v: number) => v * 2;
+      const left = Ok(f).apply(Ok(42));
+      const right = Ok(f(42));
+      expect(left.result).toEqual(right.result);
+    });
+
+    it('interchange', () => {
+      const f = (v: number) => v * 2;
+      const left = Ok(f).apply(Ok(42));
+      const right = Ok((g: typeof f) => g(42)).apply(Ok(f));
+      expect(left.result).toEqual(right.result);
+    });
+
+    it('composition', () => {
+      const u = Ok((b: boolean) => [b]);
+      const v = Ok((a: number) => a > 0);
+      const w = Ok(42);
+      const compose = (f: (b: boolean) => Array<boolean>) =>
+        (g: (a: number) => boolean) =>
+          (a: number): Array<boolean> =>
+            f(g(a));
+      const left = Ok(compose)
+        .apply(u)
+        .apply(v)
+        .apply(w);
+      const right = u.apply(v.apply(w));
+      expect(left.result).toEqual(right.result);
+    });
+  });
+
+  describe('monad laws', () => {
+    it('left identity', () => {
+      const ret = <A>(n: A) => Ok(n);
+      const f = (n: number) => Ok(n * 2);
+      const left = ret(42).chain(f);
+      const right = f(42);
+      expect(left.result).toEqual(right.result);
+    });
+
+    it('right identity', () => {
+      const ret = <A>(n: A) => Ok(n);
+      const left = Ok(42).chain(ret);
+      const right = Ok(42);
+      expect(left.result).toEqual(right.result);
+    });
+
+    it('associativity', () => {
+      const m = Ok(42);
+      const f = (n: number) => Ok(n + 2);
+      const g = (n: number) => Ok(n * 2);
+      const left = m.chain(f).chain(g);
+      const right = m.chain((v) => f(v).chain(g));
+      expect(left.result).toEqual(right.result);
+    });
+  });
+
   describe('map', () => {
     it('maps ok value', () => {
       const mapped = Ok(42).map((num) => num * 2);

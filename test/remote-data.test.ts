@@ -45,6 +45,86 @@ describe('RemoteData', () => {
     expect(StandBy.getData().get()).toBe(undefined);
   });
 
+  describe('functor laws', () => {
+    it('identity', () => {
+      expect(Success(42).map((v) => v).remoteData).toEqual(Success(42).remoteData);
+    });
+
+    it('composition', () => {
+      const f = (v: number) => v * 2;
+      const g = (v: number) => v + 2;
+      expect(Success(42).map(f).map(g).remoteData).toEqual(
+        Success(42).map((v) => g(f(v))).remoteData
+      );
+    });
+  });
+
+
+  describe('applicative laws', () => {
+    it('identity', () => {
+      const left = Success((v: number) => v).apply(Success(42));
+      const right = Success(42);
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+
+    it('homomorphism', () => {
+      const f = (v: number) => v * 2;
+      const left = Success(f).apply(Success(42));
+      const right = Success(f(42));
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+
+    it('interchange', () => {
+      const f = (v: number) => v * 2;
+      const left = Success(f).apply(Success(42));
+      const right = Success((g: typeof f) => g(42)).apply(Success(f));
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+
+    it('composition', () => {
+      const u = Success((b: boolean) => [b]);
+      const v = Success((a: number) => a > 0);
+      const w = Success(42);
+      const compose = (f: (b: boolean) => Array<boolean>) =>
+        (g: (a: number) => boolean) =>
+          (a: number): Array<boolean> =>
+            f(g(a));
+      const left = Success(compose)
+        .apply(u)
+        .apply(v)
+        .apply(w);
+      const right = u.apply(v.apply(w));
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+  });
+
+
+  describe('monad laws', () => {
+    it('left identity', () => {
+      const ret = <A>(n: A) => Success(n);
+      const f = (n: number) => Success(n * 2);
+      const left = ret(42).chain(f);
+      const right = f(42);
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+
+    it('right identity', () => {
+      const ret = <A>(n: A) => Success(n);
+      const left = Success(42).chain(ret);
+      const right = Success(42);
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+
+    it('associativity', () => {
+      const m = Success(42);
+      const f = (n: number) => Success(n + 2);
+      const g = (n: number) => Success(n * 2);
+      const left = m.chain(f).chain(g);
+      const right = m.chain((v) => f(v).chain(g));
+      expect(left.remoteData).toEqual(right.remoteData);
+    });
+  });
+
   describe('map', () => {
     it('maps success value', () => {
       const mapped = Success(42).map((num) => num * 2);

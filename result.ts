@@ -134,10 +134,10 @@ export const toString = <E, A>(r: Result<E, A>): string => {
 }
 
 export interface Result<E, A> {
-  result: I.Result<E, A>,
-  tag: I.Result<E, A>['tag'],
-  value: A | undefined,
-  error: E | undefined,
+  readonly result: I.Result<E, A>,
+  readonly tag: I.Result<E, A>['tag'],
+  readonly value: A | undefined,
+  readonly error: E | undefined,
   map: <B>(fab: (a: A) => B) => Result<E, B>,
   mapError: <F>(fef: (e: E) => F) => Result<F, A>,
   chain: <B>(fab: (a: A) => Result<E, B>) => Result<E, B>,

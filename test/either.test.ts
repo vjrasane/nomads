@@ -33,27 +33,27 @@ describe('Either', () => {
 
   describe('mapRight', () => {
     it('maps left', () => {
-      expect(Left(42).mapRight(n => n * 2).either).toEqual({ tag: 'left', value: 42 });
+      expect(Left(42).map(n => n * 2).either).toEqual({ tag: 'left', value: 42 });
     });
 
     it('maps right', () => {
-      expect(Right(42).mapRight(n => n * 2).either).toEqual({ tag: 'right', value: 84 });
+      expect(Right(42).map(n => n * 2).either).toEqual({ tag: 'right', value: 84 });
     });
   });
 
   describe('mapBoth', () => {
     it('maps left', () => {
-      expect(Left(42).mapBoth(
-        n => n * 2,
-        () => 69
-      ).either).toEqual({tag: 'left', value: 84});
+      expect(Left(42)
+        .mapLeft(n => n * 2)
+        .map(() => 69)
+      .either).toEqual({tag: 'left', value: 84});
     });
 
     it('maps right', () => {
-      expect(Right(42).mapBoth(
-        () => 69,
-        n => n * 2
-      ).either).toEqual({tag: 'right', value: 84});
+      expect(Right(42)
+        .mapLeft(() => 69)
+        .map(n => n * 2)
+      .either).toEqual({tag: 'right', value: 84});
     });
   });
 

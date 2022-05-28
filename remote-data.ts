@@ -143,10 +143,10 @@ export const toString = <E, A>(r: RemoteData<E, A>): string => {
 
 
 export interface RemoteData<E, A> {
-  remoteData: I.RemoteData<E, A>,
-  tag: I.RemoteData<E, A>['tag'],
-  data: A | undefined,
-  error: E | undefined,
+  readonly remoteData: I.RemoteData<E, A>,
+  readonly tag: I.RemoteData<E, A>['tag'],
+  readonly data: A | undefined,
+  readonly error: E | undefined,
   map: <B>(fab: (a: A) => B) => RemoteData<E, B>,
   mapError: <F>(fef: (e: E) => F) => RemoteData<F, A>,
   chain: <B>(fab: (a: A) => RemoteData<E, B>) => RemoteData<E, B>,
