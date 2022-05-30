@@ -249,22 +249,65 @@ describe('Maybe', () => {
       const maybe = Maybe.fromNumber(NaN);
       expect(maybe.maybe).toEqual({ tag: 'nothing' });
     });
+
+    it('gets just from infinity', () => {
+      const maybe = Maybe.fromNumber(Infinity);
+      expect(maybe.maybe).toEqual({ tag: 'just', value: Infinity });
+    });
+
+    it('gets just from negative infinity', () => {
+      const maybe = Maybe.fromNumber(-Infinity);
+      expect(maybe.maybe).toEqual({ tag: 'just', value: -Infinity });
+    });
   });
+
+  describe("fromFinite", () => {
+    it('gets just from number', () => {
+      const maybe = Maybe.fromFinite(42);
+      expect(maybe.maybe).toEqual({ tag: 'just', value: 42 });
+    });
+
+    it('gets nothing from NaN', () => {
+      const maybe = Maybe.fromFinite(NaN);
+      expect(maybe.maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('gets just from number', () => {
+      const maybe = Maybe.fromFinite(42);
+      expect(maybe.maybe).toEqual({ tag: 'just', value: 42 });
+    });
+
+    it('gets nothing from infinity', () => {
+      const maybe = Maybe.fromFinite(Infinity);
+      expect(maybe.maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('gets nothing from negative infinity', () => {
+      const maybe = Maybe.fromFinite(-Infinity);
+      expect(maybe.maybe).toEqual({ tag: 'nothing' });
+    });
+  })
 
   describe('join', () => {
     it('joins nested just values', () => {
-      const joined = Maybe.join(Just(Just(42)));
+      const joined = Just(Just(42)).join();
       expect(joined.maybe).toEqual({ tag: 'just', value: 42 });
     });
 
     it('joins nothing value', () => {
-      const joined = Maybe.join(Nothing);
+      const joined = Nothing.join();
       expect(joined.maybe).toEqual({ tag: 'nothing' });
     });
 
     it('joins nested nothing value', () => {
-      const joined = Maybe.join(Just(Nothing));
+      const joined = Just(Nothing).join();
       expect(joined.maybe).toEqual({ tag: 'nothing' });
+    });
+
+    it('cannot join single just value', () => {
+      const joined = Just(42).join();
+      /* @ts-ignore-error testing */
+      expect(joined.maybe).toEqual({ tag: 'just', value: 42 });
     });
   });
 

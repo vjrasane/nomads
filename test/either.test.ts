@@ -5,7 +5,7 @@ describe('Either', () => {
     const left = Left(42);
     expect(left.either).toEqual({ tag: 'left', value: 42 });
     expect(left.tag).toEqual('left');
-    expect(left.get()).toEqual(42);
+    expect(left.get()).toEqual(undefined);
     expect(left.value).toEqual(42);
     expect(left.getLeft().get()).toEqual(42);
     expect(left.getRight().get()).toEqual(undefined);
@@ -124,4 +124,32 @@ describe('Either', () => {
       expect(Left(42).toString()).toBe('Left(42)');
     });
   });
+
+  describe("join", () => {
+    it("joins two right values", () => {
+      const joined = Right(Right(42)).join();
+      expect(joined.either).toEqual({ tag: "right", value: 42 });
+    })
+
+    it("joins nested left value", () => {
+      const joined = Right(Left(42)).join();
+      expect(joined.either).toEqual({ tag: "left", value: 42 });
+    })
+
+    it("joins left value", () => {
+      const joined = Left(42).join();
+      expect(joined.either).toEqual({ tag: "left", value: 42 });
+    })
+
+    it("joins nested right value", () => {
+      const joined = Left(Right(42)).join();
+      expect(joined.left?.either).toEqual({ tag: "right", value: 42 });
+    })
+    
+    it("cannot join single right value", () => {
+      const joined = Right(42).join();
+      /* @ts-expect-error testing */
+      expect(joined.either).toEqual({ tag: "right", value: 42 });
+    });
+  })
 });

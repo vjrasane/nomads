@@ -349,18 +349,24 @@ describe('Result', () => {
 
   describe('join', () => {
     it('joins nested ok values', () => {
-      const joined = Result.join(Ok(Ok(42)));
+      const joined = Ok(Ok(42)).join();
       expect(joined.result).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('joins nested ok and err values', () => {
-      const joined = Result.join(Ok(Err('error')));
+      const joined = Ok(Err('error')).join();
       expect(joined.result).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('joins nested err value', () => {
-      const joined = Result.join(Err('error'));
+      const joined = Err('error').join();
       expect(joined.result).toEqual({ tag: 'err', error: 'error' });
+    });
+
+    it('cannot join single ok value', () => {
+      const joined = Ok(42).join();
+      /* @ts-expect-error testing */
+      expect(joined.result).toEqual({ tag: 'ok', value: 42 });
     });
   });
 

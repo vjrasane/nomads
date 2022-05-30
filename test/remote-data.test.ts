@@ -478,28 +478,34 @@ describe('RemoteData', () => {
 
   describe('join', () => {
     it('joins nested success values', () => {
-      const joined = RemoteData.join(Success(Success(42)));
+      const joined = Success(Success(42)).join();
       expect(joined.remoteData).toEqual({ tag: 'success', data: 42 });
     });
 
     it('joins nested success and failure values', () => {
-      const joined = RemoteData.join(Success(Failure('error')));
+      const joined = Success(Failure('error')).join();
       expect(joined.remoteData).toEqual({ tag: 'failure', error: 'error'  });
     });
 
     it('joins nested success and loading values', () => {
-      const joined = RemoteData.join(Success(Loading));
+      const joined = Success(Loading).join();
       expect(joined.remoteData).toEqual({ tag: 'loading'  });
     });
 
     it('joins nested success and stand by values', () => {
-      const joined = RemoteData.join(Success(StandBy));
+      const joined = Success(StandBy).join();
       expect(joined.remoteData).toEqual({ tag: 'stand by'  });
     });
 
     it('joins nested failure value', () => {
-      const joined = RemoteData.join(Failure('error'));
+      const joined = Failure('error').join();
       expect(joined.remoteData).toEqual({ tag: 'failure', error: 'error'  });
+    });
+
+    it('cannot join single success value', () => {
+      const joined = Success(42).join();
+      /* @ts-expect-error testing */
+      expect(joined.remoteData).toEqual({ tag: 'success', data: 42  });
     });
   });
 

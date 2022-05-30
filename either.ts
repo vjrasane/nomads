@@ -1,7 +1,7 @@
 import { Err, Ok, Result } from './result';
 import { Just, Maybe, Nothing } from './maybe';
 import { Tuple } from './tuple';
-import { curry, FunctionInputType, FunctionOutputType, NonEmptyArray } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType, isType, NonEmptyArray } from './src/common';
 
 namespace I {
 
@@ -43,21 +43,21 @@ export const mapLeft =
     };
 
 
-    export const or =
-    <E, A>(first: Either<E, A>) =>
-      (second: Either<E, A>): Either<E, A> => {
-        switch (second.tag) {
-        case 'right':
-          return first.tag === 'right' ? first : second;
-        default:
-          return first;
-        }
-      };
-  
-  export const orElse =
-    <E, A>(first: Either<E, A>) =>
-      (second: Either<E, A>): Either<E, A> =>
-        or(second)(first);
+export const or =
+<E, A>(first: Either<E, A>) =>
+  (second: Either<E, A>): Either<E, A> => {
+    switch (second.tag) {
+    case 'right':
+      return first.tag === 'right' ? first : second;
+    default:
+      return first;
+    }
+  };
+
+export const orElse =
+<E, A>(first: Either<E, A>) =>
+  (second: Either<E, A>): Either<E, A> =>
+    or(second)(first);
 
   
 export const getOrElse =
@@ -151,8 +151,9 @@ export const toTuple = <A, B>(e: Either<A, B>): Tuple<Maybe<A>, Maybe<B>> => {
 
 }
 
-
+const Brand: unique symbol = Symbol("Either");
 export interface Either<A, B> {
+  readonly [Brand]: typeof Brand,
   readonly either: I.Either<A, B>,
   readonly tag: I.Either<A, B>['tag'],
   readonly value: A | B,
@@ -162,6 +163,7 @@ export interface Either<A, B> {
   mapLeft: <C>(fac: (a: A) => C) => Either<C, B>,
   chain: <C>(fbc: (b: B) => Either<A, C>) => Either<A, C>,
   apply: (v: Either<A, FunctionInputType<B>>) => Either<A, FunctionOutputType<B>>
+  join: () => B extends Either<A, infer T> ? Either<A, T> : never,
   fold: <C>(f: I.Fold<A, B, C>) => C,
   or: (ra: Either<A, B>) => Either<A, B>,
   orElse: (ra: Either<A, B>) => Either<A, B>,
@@ -182,6 +184,7 @@ type EitherLeftType<E> = E extends Either<infer T, any> ? T : never;
 type EitherTypeConstruct<A extends readonly Either<any, any>[] | Record<string | symbol | number, Either<any, any>>> =  { -readonly [P in keyof A]: EitherRightType<A[P]> };
 
 const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
+  [Brand]: Brand,
   either,
   tag: either.tag,
   value: either.value,
@@ -190,6 +193,7 @@ const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
   map: (fab) => map(fab, either),
   mapLeft: <C>(fac: (a: A) => C) => EitherConstructor(I.mapLeft<A, B, C>(fac)(either)),
   chain: (fab) => chain(fab, either),
+  join: () => join(either),
   apply: (v) => chain(apply(v), either),
   fold: (f) => I.fold(f)(either),
   or: (other) => EitherConstructor(I.or(either)(other.either)),
@@ -206,7 +210,6 @@ const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
   toString: () => I.toString(either)
 })
 
-
 const map = <E, A, B>(fab: (a: A) => B, e: I.Either<E, A>): Either<E, B> => EitherConstructor(I.map<E, A, B>(fab)(e));
 const chain = <E, A, B>(fab: (a: A) => Either<E, B>, e: I.Either<E, A>): Either<E, B> => {
   switch(e.tag) {
@@ -216,6 +219,13 @@ const chain = <E, A, B>(fab: (a: A) => Either<E, B>, e: I.Either<E, A>): Either<
     return EitherConstructor<E, B>(e);
   }
 };
+const join = 
+  <A, B>(e: I.Either<A, B>): B extends Either<A, infer T> ? Either<A, T> : never => {
+    return chain(
+      ee => isType<Either<A, any>>(Brand, ee) ? ee : Right(ee), e
+    ) as B extends Either<A, infer T> ? Either<A, T> : never;
+  }
+
 const apply = <A, B>(a: Either<A, FunctionInputType<B>>) => (f: B): Either<A, FunctionOutputType<B>> => a.map(
   (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
 );
@@ -256,8 +266,6 @@ export const record = <R extends Record<string, Either<any, any>>>(record: R): E
   }, Right({})) as unknown as Either<EitherLeftType<R[keyof R]>, EitherTypeConstruct<R>>;
 };
 
-export const join =  <E, A>(r: Either<E, Either<E, A>>): Either<E, A> => r.chain(v => v);
-
 export const Either = {
   Right,
   Left,
@@ -266,6 +274,5 @@ export const Either = {
   some,
   array,
   record,
-  values,
-  join
+  values
 } as const;

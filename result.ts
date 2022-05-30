@@ -1,6 +1,6 @@
 import { Either, Left, Right } from './either';
 import { Just, Maybe, Nothing } from './maybe';
-import { curry, FunctionInputType, FunctionOutputType, NonEmptyArray } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType, isType, NonEmptyArray } from './src/common';
 
 namespace I {
 
@@ -131,9 +131,22 @@ export const toString = <E, A>(r: Result<E, A>): string => {
   }
 };
 
+
+export const chain = 
+<E, A, B>(fab: (a: A) => Result<E, B>) => (m: Result<E, A>) => {
+  switch(m.tag) {
+    case "ok":
+      return fab(m.value);
+    default:
+      return m;
+  }
+}
 }
 
+const Brand: unique symbol = Symbol("Result");
+
 export interface Result<E, A> {
+  readonly [Brand]: typeof Brand,
   readonly result: I.Result<E, A>,
   readonly tag: I.Result<E, A>['tag'],
   readonly value: A | undefined,
@@ -142,6 +155,7 @@ export interface Result<E, A> {
   mapError: <F>(fef: (e: E) => F) => Result<F, A>,
   chain: <B>(fab: (a: A) => Result<E, B>) => Result<E, B>,
   apply: (v: Result<E, FunctionInputType<A>>) => Result<E, FunctionOutputType<A>>
+  join: () => A extends Result<E, infer T> ? Result<E, T> : never,
   fold: <B>(f: I.Fold<E, A, B>) => B,
   or: (ra: Result<E, A>) => Result<E, A>,
   orElse: (ra: Result<E, A>) => Result<E, A>,
@@ -162,6 +176,7 @@ type ErrorType<R> = R extends Result<infer T, any> ? T : never;
 type ResultTypeConstruct<A extends readonly Result<any, any>[] | Record<string | symbol | number, Result<any, any>>> =  { -readonly [P in keyof A]: ResultType<A[P]> };
 
 const ResultConstructor = <E, A>(result: I.Result<E, A>): Result<E, A> => ({
+  [Brand]: Brand,
   result,
   tag: result.tag,
   value: I.getValue(result).value,
@@ -169,6 +184,7 @@ const ResultConstructor = <E, A>(result: I.Result<E, A>): Result<E, A> => ({
   map: (fab) => map(fab, result),
   mapError: <B>(fef: (e: E) => B) => ResultConstructor(I.mapError<E, A, B>(fef)(result)),
   chain: (fab) => chain(fab, result),
+  join: () => join(result),
   apply: (v) => chain(apply(v), result),
   fold: (f) => I.fold(f)(result),
   or: (other) => ResultConstructor(I.or(result)(other.result)),
@@ -192,6 +208,14 @@ const chain = <E, A, B>(fab: (a: A) => Result<E, B>, r: I.Result<E, A>): Result<
     return ResultConstructor(r);
   }
 };
+
+const join = 
+  <E, A>(r: I.Result<E, A>): A extends Result<E, infer T> ? Result<E, T> : never => {
+    return chain(
+      rr => isType<Result<E, any>>(Brand, rr) ? rr : Ok(rr), r
+    ) as A extends Result<E, infer T> ? Result<E, T> : never;
+  }
+
 const apply = <E, A>(a: Result<E, FunctionInputType<A>>) => (f: A): Result<E, FunctionOutputType<A>> => a.map(
   (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
 );
@@ -231,8 +255,6 @@ export const record = <R extends Record<string, Result<any, any>>>(record: R): R
   }, Ok({})) as unknown as Result<ErrorType<R[keyof R]>, ResultTypeConstruct<R>>;
 };
 
-export const join =  <E, A>(r: Result<E, Result<E, A>>): Result<E, A> => r.chain(v => v);
-
 export const Result = {
   Ok,
   Err,
@@ -241,6 +263,5 @@ export const Result = {
   some,
   array,
   record,
-  values,
-  join
+  values
 } as const;

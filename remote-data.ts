@@ -1,6 +1,6 @@
 import { Just, Maybe, Nothing } from './maybe';
 import { Result } from './result';
-import { curry, FunctionInputType, FunctionOutputType, NonEmptyArray } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType, isType, NonEmptyArray } from './src/common';
 
 namespace I {
 
@@ -141,8 +141,9 @@ export const toString = <E, A>(r: RemoteData<E, A>): string => {
 
 }
 
-
+const Brand: unique symbol = Symbol("RemoteData");
 export interface RemoteData<E, A> {
+  readonly [Brand]: typeof Brand,
   readonly remoteData: I.RemoteData<E, A>,
   readonly tag: I.RemoteData<E, A>['tag'],
   readonly data: A | undefined,
@@ -150,6 +151,7 @@ export interface RemoteData<E, A> {
   map: <B>(fab: (a: A) => B) => RemoteData<E, B>,
   mapError: <F>(fef: (e: E) => F) => RemoteData<F, A>,
   chain: <B>(fab: (a: A) => RemoteData<E, B>) => RemoteData<E, B>,
+  join: () => A extends RemoteData<E, infer T> ? RemoteData<E, T> : never,
   apply: (v: RemoteData<E, FunctionInputType<A>>) => RemoteData<E, FunctionOutputType<A>>,
   fold: <B>(f: I.Fold<E, A, B>) => B,
   or: (ra: RemoteData<E, A>) => RemoteData<E, A>,
@@ -171,6 +173,7 @@ type ErrorType<R> = R extends RemoteData<infer T, any> ? T : never;
 type RemoteDataTypeConstruct<A extends readonly RemoteData<any, any>[] | Record<string | symbol | number, RemoteData<any, any>>> =  { -readonly [P in keyof A]: RemoteDataType<A[P]> };
 
 const RemoteDataConstructor = <E, A>(remoteData: I.RemoteData<E, A>): RemoteData<E, A> => ({
+  [Brand]: Brand,
   remoteData,
   tag: remoteData.tag,
   data: I.getData(remoteData).value,
@@ -178,6 +181,7 @@ const RemoteDataConstructor = <E, A>(remoteData: I.RemoteData<E, A>): RemoteData
   map: (fab) => map(fab, remoteData),
   mapError: <B>(fef: (e: E) => B) => RemoteDataConstructor(I.mapError<E, A, B>(fef)(remoteData)),
   chain: (fab) => chain(fab, remoteData),
+  join: () => join(remoteData),
   apply: (v) => chain(apply(v), remoteData),
   fold: (f) => I.fold(f)(remoteData),
   or: (other) => RemoteDataConstructor(I.or(remoteData)(other.remoteData)),
@@ -200,6 +204,14 @@ const chain = <E, A, B>(fab: (a: A) => RemoteData<E, B>, r: I.RemoteData<E, A>):
     return RemoteDataConstructor(r);
   }
 };
+
+const join = 
+  <E, A>(r: I.RemoteData<E, A>): A extends RemoteData<E, infer T> ? RemoteData<E, T> : never => {
+    return chain(
+      rr => isType<RemoteData<E, any>>(Brand, rr) ? rr : Success(rr), r
+    ) as A extends RemoteData<E, infer T> ? RemoteData<E, T> : never;
+  }
+
 const apply = <E, A>(a: RemoteData<E, FunctionInputType<A>>) => (f: A): RemoteData<E, FunctionOutputType<A>> => a.map(
   (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
 );
@@ -212,8 +224,6 @@ export const StandBy: RemoteData<any, any> = RemoteDataConstructor(I.StandBy);
 export const applyAll = <A extends readonly RemoteData<any, any>[] | [], P extends any[] & RemoteDataTypeConstruct<A>, F extends (...args: P) => any>(f: F, args: A): RemoteData<ErrorType<A[keyof A]>, ReturnType<F>> => {
   return RemoteData.all(args).map((args) => f(...args as Parameters<F>)) as RemoteData<ErrorType<A[keyof A]>, ReturnType<F>>;
 };
-
-export const join = <E, A>(r: RemoteData<E, RemoteData<E, A>>): RemoteData<E, A> => r.chain(v => v);
 
 export const all = <T extends readonly RemoteData<any, any>[] | []>(arr: T): RemoteData<ErrorType<T[keyof T]>, RemoteDataTypeConstruct<T>> => {
   return (arr as readonly RemoteData<ErrorType<T[keyof T]>, any>[]).reduce(
@@ -262,6 +272,5 @@ export const RemoteData = {
   array,
   record,
   values,
-  join,
   fromResult
 } as const;

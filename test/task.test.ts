@@ -394,17 +394,32 @@ describe('Task', () => {
 
   describe('join', () => {
     it('joins two resolving tasks', async () => {
-      const result = await Task.join(
-        Task.resolve(Task.resolve(42))
-      ).fork();
+      const result = await Task.resolve(Task.resolve(42))
+        .join()
+        .fork();
       expect(result.value).toBe(42);
     });
 
     it('joins resolving task with rejecting task', async () => {
-      const result = await Task.join(
-        Task.resolve(Task.reject('error'))
-      ).fork();
+      const result = await Task.resolve(Task.reject('error'))
+        .join()
+        .fork();
       expect(result.error).toBe('error');
+    });
+
+    it('joins rejecting task', async () => {
+      const result = await Task.reject('error')
+        .join()
+        .fork();
+      expect(result.error).toBe('error');
+    });
+
+    it('cannot join single resolving task', async () => {
+      const result = await Task.resolve(42)
+        .join()
+        /* @ts-expect-error testing */
+        .fork();
+      expect(result.value).toBe(42);
     });
 
     it('works with chain', async () => {
