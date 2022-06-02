@@ -1,15 +1,7 @@
 import { Err, Ok, Result } from './result';
-import {
-  curry,
-  FunctionInputType,
-  FunctionOutputType,
-  isNonNullable,
-  isNonOptional,
-  isType,
-  NonOptional,
-  Nullable,
-  Optional,
-} from './src/common';
+import { isType } from './src/type';
+import { isNonNullable, isNonOptional, NonOptional, Nullable, Optional } from './src/optional';
+import { curry, FunctionInputType, FunctionOutputType } from './src/function';
 
 namespace I {
   export type Just<A> = {

@@ -1,6 +1,8 @@
 import { Either, Left, Right } from './either';
 import { Just, Maybe, Nothing } from './maybe';
-import { curry, FunctionInputType, FunctionOutputType, isType, NonEmptyArray } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType } from './src/function';
+import { NonEmptyArray } from './src/optional';
+import { isType } from './src/type';
 
 namespace I {
 

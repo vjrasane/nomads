@@ -1,7 +1,9 @@
 import { Err, Ok, Result } from './result';
 import { Just, Maybe, Nothing } from './maybe';
 import { Tuple } from './tuple';
-import { curry, FunctionInputType, FunctionOutputType, isType, NonEmptyArray } from './src/common';
+import { isType } from './src/type';
+import { curry, FunctionInputType, FunctionOutputType } from './src/function';
+import { NonEmptyArray } from './src/optional';
 
 namespace I {
 
@@ -244,7 +246,7 @@ export const all = <T extends readonly Either<any, any>[] | []>(arr: T): Either<
       a => curr.map((v) => [...(a as readonly unknown[]), v ]  as unknown as EitherTypeConstruct<T>)
     ), Right([]));
 };
-    
+
 export const some = <A extends NonEmptyArray<Either<E, any>>, E = any>(arr: A): Either<E, EitherRightType<A[number]>> => {
   return arr.reduce((acc, curr): Either<E, EitherRightType<A[number]>> => acc.or(curr));
 };
