@@ -115,7 +115,7 @@ export const getLeft = <A, B>(e: Either<A, B>): Maybe<A> => {
   case 'left':
     return Just(e.value);
   case 'right':
-    return Nothing;
+    return Nothing();
   }
 };
 
@@ -124,7 +124,7 @@ export const getRight = <A, B>(e: Either<A, B>): Maybe<B> => {
   case 'right':
     return Just(e.value);
   default:
-    return Nothing;
+    return Nothing();
   }
 };
 
@@ -190,8 +190,8 @@ const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
   either,
   tag: either.tag,
   value: either.value,
-  left: I.getLeft(either).value,
-  right: I.getRight(either).value,
+  left: I.getLeft(either).get(),
+  right: I.getRight(either).get(),
   map: (fab) => map(fab, either),
   mapLeft: <C>(fac: (a: A) => C) => EitherConstructor(I.mapLeft<A, B, C>(fac)(either)),
   chain: (fab) => chain(fab, either),
@@ -205,7 +205,7 @@ const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
   toResult: () => I.toResult(either),
   toMaybe: () => I.getRight(either),
   toTuple: () => I.toTuple(either),
-  get: () => I.getRight(either).value,
+  get: () => I.getRight(either).get(),
   getOrElse: (def) => I.getOrElse(def)(either),
   getLeft: () => I.getLeft(either),
   getRight: () => I.getRight(either),

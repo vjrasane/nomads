@@ -1,5 +1,6 @@
 import { Result, Ok, Err } from './result';
-import { curry, FunctionInputType, FunctionOutputType, isType } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType } from './src/function';
+import { isType } from './src/type';
 
 namespace I {
   export type Task<E, A> = () => Promise<Result<E, A>>;
