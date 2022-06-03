@@ -1,10 +1,10 @@
 
 export const isNonOptional = <A>(a: A): a is NonOptional<A> => {
-	return a !== undefined;
+  return a !== undefined;
 };
 
 export const isNonNullable = <A>(a: A): a is NonNullable<A> => {
-	return a != null;
+  return a != null;
 };
 
 export type NonOptional<T> = T extends undefined ? never : T;

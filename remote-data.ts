@@ -1,6 +1,8 @@
 import { Just, Maybe, Nothing } from './maybe';
 import { Result } from './result';
-import { curry, FunctionInputType, FunctionOutputType, isType, NonEmptyArray } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType } from './src/function';
+import { NonEmptyArray } from './src/optional';
+import { isType } from './src/type';
 
 namespace I {
 
@@ -55,7 +57,7 @@ export const getData = <E, A>(r: RemoteData<E, A>): Maybe<A> => {
   case 'success':
     return Just(r.data);
   default:
-    return Nothing;
+    return Nothing();
   }
 };
 
@@ -64,7 +66,7 @@ export const getError = <E, A>(r: RemoteData<E, A>): Maybe<E> => {
   case 'failure':
     return Just(r.error);
   default:
-    return Nothing;
+    return Nothing();
   }
 };
 
@@ -141,7 +143,7 @@ export const toString = <E, A>(r: RemoteData<E, A>): string => {
 
 }
 
-const Brand: unique symbol = Symbol("RemoteData");
+const Brand: unique symbol = Symbol('RemoteData');
 export interface RemoteData<E, A> {
   readonly [Brand]: typeof Brand,
   readonly remoteData: I.RemoteData<E, A>,
@@ -176,8 +178,8 @@ const RemoteDataConstructor = <E, A>(remoteData: I.RemoteData<E, A>): RemoteData
   [Brand]: Brand,
   remoteData,
   tag: remoteData.tag,
-  data: I.getData(remoteData).value,
-  error: I.getError(remoteData).value,
+  data: I.getData(remoteData).get(),
+  error: I.getError(remoteData).get(),
   map: (fab) => map(fab, remoteData),
   mapError: <B>(fef: (e: E) => B) => RemoteDataConstructor(I.mapError<E, A, B>(fef)(remoteData)),
   chain: (fab) => chain(fab, remoteData),
@@ -188,7 +190,7 @@ const RemoteDataConstructor = <E, A>(remoteData: I.RemoteData<E, A>): RemoteData
   orElse: (other) => RemoteDataConstructor(I.orElse(remoteData)(other.remoteData)),
   default: (def) => RemoteDataConstructor(I.defaultTo<E, A>(def)(remoteData)),
   toMaybe: () => I.getData(remoteData),
-  get: () => I.getData(remoteData).value,
+  get: () => I.getData(remoteData).get(),
   getOrElse: (def) => I.getOrElse(def)(remoteData),
   getData: () => I.getData(remoteData),
   getError: () => I.getError(remoteData),
@@ -210,7 +212,7 @@ const join =
     return chain(
       rr => isType<RemoteData<E, any>>(Brand, rr) ? rr : Success(rr), r
     ) as A extends RemoteData<E, infer T> ? RemoteData<E, T> : never;
-  }
+  };
 
 const apply = <E, A>(a: RemoteData<E, FunctionInputType<A>>) => (f: A): RemoteData<E, FunctionOutputType<A>> => a.map(
   (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v

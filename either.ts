@@ -47,43 +47,43 @@ export const mapLeft =
 
 export const or =
 <E, A>(first: Either<E, A>) =>
-  (second: Either<E, A>): Either<E, A> => {
-    switch (second.tag) {
-    case 'right':
-      return first.tag === 'right' ? first : second;
-    default:
-      return first;
-    }
-  };
+    (second: Either<E, A>): Either<E, A> => {
+      switch (second.tag) {
+      case 'right':
+        return first.tag === 'right' ? first : second;
+      default:
+        return first;
+      }
+    };
 
 export const orElse =
 <E, A>(first: Either<E, A>) =>
-  (second: Either<E, A>): Either<E, A> =>
-    or(second)(first);
+    (second: Either<E, A>): Either<E, A> =>
+      or(second)(first);
 
   
 export const getOrElse =
 <E, A>(def: A) =>
-  (r: Either<E, A>): A => {
-    switch (r.tag) {
-    case 'right':
-      return r.value;
-    default:
-      return def;
-    }
-  };
+    (r: Either<E, A>): A => {
+      switch (r.tag) {
+      case 'right':
+        return r.value;
+      default:
+        return def;
+      }
+    };
 
 
 export const defaultTo =
 <E, A>(def: A) =>
-  (r: Either<E, A>): Either<E, A> => {
-    switch (r.tag) {
-    case 'right':
-      return r;
-    default:
-      return Right(def);
-    }
-  };
+    (r: Either<E, A>): Either<E, A> => {
+      switch (r.tag) {
+      case 'right':
+        return r;
+      default:
+        return Right(def);
+      }
+    };
 
 export type Fold<A, B, C> = {
   left: (a: A) => C,
@@ -115,7 +115,7 @@ export const getLeft = <A, B>(e: Either<A, B>): Maybe<A> => {
   case 'left':
     return Just(e.value);
   case 'right':
-    return Nothing;
+    return Nothing();
   }
 };
 
@@ -124,7 +124,7 @@ export const getRight = <A, B>(e: Either<A, B>): Maybe<B> => {
   case 'right':
     return Just(e.value);
   default:
-    return Nothing;
+    return Nothing();
   }
 };
 
@@ -153,7 +153,7 @@ export const toTuple = <A, B>(e: Either<A, B>): Tuple<Maybe<A>, Maybe<B>> => {
 
 }
 
-const Brand: unique symbol = Symbol("Either");
+const Brand: unique symbol = Symbol('Either');
 export interface Either<A, B> {
   readonly [Brand]: typeof Brand,
   readonly either: I.Either<A, B>,
@@ -190,8 +190,8 @@ const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
   either,
   tag: either.tag,
   value: either.value,
-  left: I.getLeft(either).value,
-  right: I.getRight(either).value,
+  left: I.getLeft(either).get(),
+  right: I.getRight(either).get(),
   map: (fab) => map(fab, either),
   mapLeft: <C>(fac: (a: A) => C) => EitherConstructor(I.mapLeft<A, B, C>(fac)(either)),
   chain: (fab) => chain(fab, either),
@@ -205,12 +205,12 @@ const EitherConstructor = <A, B>(either: I.Either<A, B>): Either<A, B> => ({
   toResult: () => I.toResult(either),
   toMaybe: () => I.getRight(either),
   toTuple: () => I.toTuple(either),
-  get: () => I.getRight(either).value,
+  get: () => I.getRight(either).get(),
   getOrElse: (def) => I.getOrElse(def)(either),
   getLeft: () => I.getLeft(either),
   getRight: () => I.getRight(either),
   toString: () => I.toString(either)
-})
+});
 
 const map = <E, A, B>(fab: (a: A) => B, e: I.Either<E, A>): Either<E, B> => EitherConstructor(I.map<E, A, B>(fab)(e));
 const chain = <E, A, B>(fab: (a: A) => Either<E, B>, e: I.Either<E, A>): Either<E, B> => {
@@ -226,7 +226,7 @@ const join =
     return chain(
       ee => isType<Either<A, any>>(Brand, ee) ? ee : Right(ee), e
     ) as B extends Either<A, infer T> ? Either<A, T> : never;
-  }
+  };
 
 const apply = <A, B>(a: Either<A, FunctionInputType<B>>) => (f: B): Either<A, FunctionOutputType<B>> => a.map(
   (v) => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v

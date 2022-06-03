@@ -46,14 +46,14 @@ describe('Either', () => {
       expect(Left(42)
         .mapLeft(n => n * 2)
         .map(() => 69)
-      .either).toEqual({tag: 'left', value: 84});
+        .either).toEqual({tag: 'left', value: 84});
     });
 
     it('maps right', () => {
       expect(Right(42)
         .mapLeft(() => 69)
         .map(n => n * 2)
-      .either).toEqual({tag: 'right', value: 84});
+        .either).toEqual({tag: 'right', value: 84});
     });
   });
 
@@ -125,31 +125,31 @@ describe('Either', () => {
     });
   });
 
-  describe("join", () => {
-    it("joins two right values", () => {
+  describe('join', () => {
+    it('joins two right values', () => {
       const joined = Right(Right(42)).join();
-      expect(joined.either).toEqual({ tag: "right", value: 42 });
-    })
+      expect(joined.either).toEqual({ tag: 'right', value: 42 });
+    });
 
-    it("joins nested left value", () => {
+    it('joins nested left value', () => {
       const joined = Right(Left(42)).join();
-      expect(joined.either).toEqual({ tag: "left", value: 42 });
-    })
+      expect(joined.either).toEqual({ tag: 'left', value: 42 });
+    });
 
-    it("joins left value", () => {
+    it('joins left value', () => {
       const joined = Left(42).join();
-      expect(joined.either).toEqual({ tag: "left", value: 42 });
-    })
+      expect(joined.either).toEqual({ tag: 'left', value: 42 });
+    });
 
-    it("joins nested right value", () => {
+    it('joins nested right value', () => {
       const joined = Left(Right(42)).join();
-      expect(joined.left?.either).toEqual({ tag: "right", value: 42 });
-    })
+      expect(joined.left?.either).toEqual({ tag: 'right', value: 42 });
+    });
     
-    it("cannot join single right value", () => {
+    it('cannot join single right value', () => {
       const joined = Right(42).join();
       /* @ts-expect-error testing */
-      expect(joined.either).toEqual({ tag: "right", value: 42 });
+      expect(joined.either).toEqual({ tag: 'right', value: 42 });
     });
-  })
+  });
 });

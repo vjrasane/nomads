@@ -31,7 +31,7 @@ describe('Task', () => {
 
   describe('applicative laws', () => {
     it('identity', async () => {
-      const left = await Task.resolve((v: number) => v).apply(Task.resolve(42)).fork()
+      const left = await Task.resolve((v: number) => v).apply(Task.resolve(42)).fork();
       const right = await Task.resolve(42).fork();
       expect(left.value).toEqual(right.value);
     });

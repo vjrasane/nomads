@@ -2,17 +2,15 @@ import { Maybe, Just, Nothing } from '../maybe';
 
 describe('Maybe', () => {
   it('Nothing', () => {
-    expect(Nothing.maybe).toEqual({ tag: 'nothing' });
-    expect(Nothing.tag).toBe('nothing');
-    expect(Nothing.get()).toBe(undefined);
-    expect(Nothing.value).toBe(undefined);
+    expect(Nothing().maybe).toEqual({ tag: 'nothing' });
+    expect(Nothing().tag).toBe('nothing');
+    expect(Nothing().get()).toBe(undefined);
   });
 
   it('Just', () => {
     expect(Just(42).maybe).toEqual({ tag: 'just', value: 42 });
     expect(Just(42).tag).toBe('just');
     expect(Just(42).get()).toBe(42);
-    expect(Just(42).value).toBe(42);
   });
 
   describe('functor laws', () => {
@@ -100,7 +98,7 @@ describe('Maybe', () => {
     });
 
     it('maps nothing value', () => {
-      const mapped = Nothing.map((str) => parseInt(str, 10));
+      const mapped = Nothing<string>().map((str) => parseInt(str, 10));
       expect(mapped.maybe).toEqual({ tag: 'nothing' });
     });
   });
@@ -112,17 +110,17 @@ describe('Maybe', () => {
     });
 
     it('chains two nothing values', () => {
-      const chained = Nothing.chain(() => Nothing);
+      const chained = Nothing().chain(Nothing);
       expect(chained.maybe).toEqual({ tag: 'nothing' });
     });
 
     it('chains nothing value with just value', () => {
-      const chained = Nothing.chain(() => Just(42));
+      const chained = Nothing().chain(() => Just(42));
       expect(chained.maybe).toEqual({ tag: 'nothing' });
     });
 
     it('chains just value with nothing value', () => {
-      const chained = Just(42).chain(() => Nothing);
+      const chained = Just(42).chain(Nothing);
       expect(chained.maybe).toEqual({ tag: 'nothing' });
     });
   });
@@ -134,17 +132,17 @@ describe('Maybe', () => {
     });
 
     it('just or nothing returns first value', () => {
-      const or = Just(42).or(Nothing);
+      const or = Just(42).or(Nothing());
       expect(or.maybe).toEqual({ tag: 'just', value: 42 });
     });
 
     it('nothing or just returns second value', () => {
-      const or = Nothing.or(Just(42));
+      const or = Nothing<number>().or(Just(42));
       expect(or.maybe).toEqual({ tag: 'just', value: 42 });
     });
 
     it('nothing or nothing returns nothing', () => {
-      const or = Nothing.or(Nothing);
+      const or = Nothing().or(Nothing());
       expect(or.maybe).toEqual({ tag: 'nothing' });
     });
   });
@@ -156,17 +154,17 @@ describe('Maybe', () => {
     });
 
     it('just orElse nothing returns first value', () => {
-      const or = Just(42).orElse(Nothing);
+      const or = Just(42).orElse(Nothing());
       expect(or.maybe).toEqual({ tag: 'just', value: 42 });
     });
 
     it('nothing orElse just returns second value', () => {
-      const or = Nothing.orElse(Just(42));
+      const or = Nothing<number>().orElse(Just(42));
       expect(or.maybe).toEqual({ tag: 'just', value: 42 });
     });
 
     it('nothing orElse nothing returns nothing', () => {
-      const or = Nothing.orElse(Nothing);
+      const or = Nothing().orElse(Nothing());
       expect(or.maybe).toEqual({ tag: 'nothing' });
     });
   });
@@ -178,12 +176,12 @@ describe('Maybe', () => {
     });
 
     it('nothing defaults to given value', () => {
-      const def = Nothing.default(0);
+      const def = Nothing().default(0);
       expect(def.maybe).toEqual({ tag: 'just', value: 0 });
     });
 
     it('nothing defaults to first default value', () => {
-      const def = Nothing.default(0).default(-1);
+      const def = Nothing().default(0).default(-1);
       expect(def.maybe).toEqual({ tag: 'just', value: 0 });
     });
   });
@@ -200,7 +198,7 @@ describe('Maybe', () => {
     });
 
     it('filters nothing with condition', () => {
-      const filtered = Nothing.filter((n) => n < 0);
+      const filtered = Nothing<number>().filter((n) => n < 0);
       expect(filtered.maybe).toEqual({ tag: 'nothing' });
     });
   });
@@ -261,7 +259,7 @@ describe('Maybe', () => {
     });
   });
 
-  describe("fromFinite", () => {
+  describe('fromFinite', () => {
     it('gets just from number', () => {
       const maybe = Maybe.fromFinite(42);
       expect(maybe.maybe).toEqual({ tag: 'just', value: 42 });
@@ -286,7 +284,7 @@ describe('Maybe', () => {
       const maybe = Maybe.fromFinite(-Infinity);
       expect(maybe.maybe).toEqual({ tag: 'nothing' });
     });
-  })
+  });
 
   describe('join', () => {
     it('joins nested just values', () => {
@@ -295,12 +293,12 @@ describe('Maybe', () => {
     });
 
     it('joins nothing value', () => {
-      const joined = Nothing.join();
+      const joined = Nothing<Maybe<number>>().join();
       expect(joined.maybe).toEqual({ tag: 'nothing' });
     });
 
     it('joins nested nothing value', () => {
-      const joined = Just(Nothing).join();
+      const joined = Just(Nothing()).join();
       expect(joined.maybe).toEqual({ tag: 'nothing' });
     });
 
@@ -317,11 +315,11 @@ describe('Maybe', () => {
     });
 
     it('prints nested values', () => {
-      expect(Just(Just(Nothing)).toString()).toBe('Just(Just(Nothing))');
+      expect(Just(Just(Nothing())).toString()).toBe('Just(Just(Nothing))');
     });
 
     it('prints nothing value', () => {
-      expect(Nothing.toString()).toBe('Nothing');
+      expect(Nothing().toString()).toBe('Nothing');
     });
   });
 
@@ -337,7 +335,7 @@ describe('Maybe', () => {
 
     it('folds nothing value', () => {
       expect(
-        Nothing.fold({
+        Nothing<number>().fold({
           nothing: () => 69,
           just: (n) => n * 2,
         })
@@ -351,11 +349,11 @@ describe('Maybe', () => {
     });
 
     it('gets nothing value', () => {
-      expect(Nothing.getOrElse(42)).toBe(42);
+      expect(Nothing().getOrElse(42)).toBe(42);
     });
 
     it('gets nothing default value', () => {
-      expect(Nothing.default(42).getOrElse(0)).toBe(42);
+      expect(Nothing().default(42).getOrElse(0)).toBe(42);
     });
   });
 
@@ -366,7 +364,7 @@ describe('Maybe', () => {
     });
 
     it('gets err from nothing value', () => {
-      const res = Nothing.toResult('error');
+      const res = Nothing().toResult('error');
       expect(res.result).toEqual({ tag: 'err', error: 'error' });
     });
   });
@@ -445,7 +443,7 @@ describe('Maybe', () => {
     });
 
     it('switch case for nothing', () => {
-      const unwrapped = Nothing.maybe;
+      const unwrapped = Nothing().maybe;
       switch (unwrapped.tag) {
       case 'nothing': {
         expect(true).toBe(true);
@@ -479,7 +477,7 @@ describe('Maybe', () => {
       expect(
         Maybe.record({
           first: Just(1),
-          second: Nothing,
+          second: Nothing(),
           third: Just(3),
         }).maybe
       ).toEqual({
@@ -497,7 +495,7 @@ describe('Maybe', () => {
     });
 
     it('returns nothing for an array with a single nothing', () => {
-      expect(Maybe.all([Just(1), Nothing, Just(3)]).maybe).toEqual({
+      expect(Maybe.all([Just(1), Nothing(), Just(3)]).maybe).toEqual({
         tag: 'nothing',
       });
     });
@@ -525,7 +523,7 @@ describe('Maybe', () => {
     });
 
     it('returns nothing for an array with a single nothing', () => {
-      expect(Maybe.array([Just(1), Nothing, Just(3)]).maybe).toEqual({
+      expect(Maybe.array([Just(1), Nothing(), Just(3)]).maybe).toEqual({
         tag: 'nothing',
       });
     });
@@ -553,13 +551,13 @@ describe('Maybe', () => {
     });
 
     it('returns nothing for an array of nothings', () => {
-      expect(Maybe.some([Nothing, Nothing, Nothing]).maybe).toEqual({
+      expect(Maybe.some([Nothing(), Nothing(), Nothing()]).maybe).toEqual({
         tag: 'nothing',
       });
     });
 
     it('returns just for an array with single just', () => {
-      expect(Maybe.some([Nothing, Just(2), Nothing]).maybe).toEqual({
+      expect(Maybe.some([Nothing(), Just(2), Nothing()]).maybe).toEqual({
         tag: 'just',
         value: 2,
       });
@@ -576,11 +574,11 @@ describe('Maybe', () => {
     });
 
     it('returns values for an array of with single nothing', () => {
-      expect(Maybe.values([Just(1), Nothing, Just(3)])).toEqual([1, 3]);
+      expect(Maybe.values([Just(1), Nothing(), Just(3)])).toEqual([1, 3]);
     });
 
     it('returns empty array for an array of nothings', () => {
-      expect(Maybe.values([Nothing, Nothing, Nothing])).toEqual([]);
+      expect(Maybe.values([Nothing(), Nothing(), Nothing()])).toEqual([]);
     });
 
     it('returns empty array for an empty array', () => {
@@ -699,7 +697,7 @@ describe('Maybe', () => {
     });
 
     it('concats nothing value', () => {
-      expect(Nothing.concatTo([1, 2, 3])).toEqual([1, 2, 3]);
+      expect(Nothing().concatTo([1, 2, 3])).toEqual([1, 2, 3]);
     });
   });
 
@@ -709,7 +707,7 @@ describe('Maybe', () => {
     });
 
     it('appends nothing value', () => {
-      expect(Nothing.appendTo([1, 2, 3])).toEqual([1, 2, 3]);
+      expect(Nothing().appendTo([1, 2, 3])).toEqual([1, 2, 3]);
     });
   });
 
@@ -720,12 +718,12 @@ describe('Maybe', () => {
     });
 
     it('applies function to nothing', () => {
-      const applied = Just((n: number) => n * 2).apply(Nothing);
+      const applied = Just((n: number) => n * 2).apply(Nothing());
       expect(applied.maybe).toEqual({ tag: 'nothing' });
     });
 
     it('cannot apply nothing to just', () => {
-      const applied = Nothing
+      const applied = Nothing()
         /* @ts-expect-error testing */
         .apply(Just(42));
       expect(applied.maybe).toEqual({ tag: 'nothing' });
@@ -758,7 +756,7 @@ describe('Maybe', () => {
         (a: number) => (b: number) => (c: number) => a + b + c
       )
         .apply(Just(1))
-        .apply(Nothing)
+        .apply(Nothing())
         .apply(Just(3));
       expect(applied.maybe).toEqual({ tag: 'nothing' });
     });
@@ -779,7 +777,7 @@ describe('Maybe', () => {
     });
 
     it('applies function to array with one nothing', () => {
-      const applied = Maybe.applyAll((a, b) => a + b, [Just(42), Nothing]);
+      const applied = Maybe.applyAll((a, b) => a + b, [Just(42), Nothing()]);
       expect(applied.maybe).toEqual({ tag: 'nothing' });
     });
 

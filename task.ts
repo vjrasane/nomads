@@ -1,5 +1,6 @@
 import { Result, Ok, Err } from './result';
-import { curry, FunctionInputType, FunctionOutputType, isType } from './src/common';
+import { curry, FunctionInputType, FunctionOutputType } from './src/function';
+import { isType } from './src/type';
 
 namespace I {
   export type Task<E, A> = () => Promise<Result<E, A>>;
@@ -12,7 +13,7 @@ namespace I {
 }
 
 
-const Brand: unique symbol = Symbol("Task");
+const Brand: unique symbol = Symbol('Task');
 
 export interface Task<E, A> {
   readonly [Brand]: typeof Brand,
@@ -60,8 +61,8 @@ const join =
   <E, A>(t: I.Task<E, A>): A extends Task<E, infer T> ? Task<E, T> : never => {
     return chain(
       (tt) => isType<Task<E, any>>(Brand, tt) ? tt : Task.resolve(tt), t
-    ) as A extends Task<E, infer T> ? Task<E, T> : never
-  }
+    ) as A extends Task<E, infer T> ? Task<E, T> : never;
+  };
 
 const apply = <E, A>(a: Task<E, FunctionInputType<A>>) => (f: A): Task<E, FunctionOutputType<A>> => a.map(
   v => typeof f === 'function' ? curry(f as unknown as (...args: any[]) => any)(v) : v
