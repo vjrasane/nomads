@@ -351,11 +351,11 @@ describe('Maybe', () => {
     });
 
     it('gets nothing value', () => {
-      expect(Nothing().getOrElse(42)).toBe(42);
+      expect(Nothing<number>().getOrElse(42)).toBe(42);
     });
 
     it('gets nothing default value', () => {
-      expect(Nothing().default(42).getOrElse(0)).toBe(42);
+      expect(Nothing<number>().default(42).getOrElse(0)).toBe(42);
     });
   });
 
@@ -779,7 +779,7 @@ describe('Maybe', () => {
     });
 
     it('applies function to array with one nothing', () => {
-      const applied = Maybe.applyAll((a, b) => a + b, [Just(42), Nothing()]);
+      const applied = Maybe.applyAll((a: number, b: number) => a + b, [Just(42), Nothing<number>()]);
       expect(applied.base).toEqual({ tag: 'nothing' });
     });
 

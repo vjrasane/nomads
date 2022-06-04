@@ -1,8 +1,9 @@
+import { Err, Ok, Result } from '../result';
 import { curry, FunctionInputType, FunctionOutputType } from './function';
-import { isNonNullable, isNonOptional, NonOptional, Optional } from './optional';
+import { Optional } from './optional';
 import { isType } from './type';
+import * as Classes from "./maybe.classes";
 
-const Brand: unique symbol = Symbol('Maybe');
 
 type MaybeType<M> = M extends Maybe<infer T>
   ? T : never;
@@ -11,67 +12,12 @@ type MaybeConstructType<
   A extends readonly Maybe<unknown>[] | Record<string | symbol | number, Maybe<unknown>>
 > = { -readonly [P in keyof A]: MaybeType<A[P]> };
 
-interface IMaybe<A> {
-  base: { tag: 'just', value: A } | { tag: 'nothing'}
-  get: () => Optional<A>;
-  map: <B>(fab: (a: A) => B) => Maybe<B>;
-  chain: <B>(fab: (a: A) => Maybe<B>) => Maybe<B>;
-  apply: (v: Maybe<FunctionInputType<A>>) => Maybe<FunctionOutputType<A>>;
-  join: () => A extends Maybe<infer T> ? Maybe<T> : never,
-}
+export type Maybe<A> = Classes.Just<A> | Classes.Nothing<A>;
 
-class JustClass<A> implements IMaybe<A>{
-  readonly [Brand] = Brand;
-  readonly tag: 'just';
-  constructor(readonly value: A) {}
+export const Just = <A>(value: A): Maybe<A> => new Classes.Just(value);
+export const Nothing = <A>(): Maybe<A> => new Classes.Nothing<A>();
 
-  get base():  { tag: 'just', value: A }  {
-    return { tag: 'just', value: this.value };
-  }
-
-  get = () => this.value;
-  map = <B>(fab: (a: A) => B): Maybe<B> => new JustClass(fab(this.value));
-  chain = <B>(fab: (a: A) => Maybe<B>): Maybe<B> => fab(this.value);
-  apply = (ma: Maybe<FunctionInputType<A>>): Maybe<FunctionOutputType<A>> =>
-    this.chain((f) => ma.map((a) => typeof f === 'function'
-      ? curry(f as unknown as (...args: any[]) => any)(a)
-      : a)) as Maybe<FunctionOutputType<A>>;
-  join = (): A extends Maybe<infer T> ? Maybe<T> : never =>
-      this.chain(
-        (m) => isType<Maybe<any>>(Brand, m)
-          ? m as unknown as A extends Maybe<infer T> ? Maybe<T> : never
-          : new JustClass(m) as unknown as A extends Maybe<infer T> ? Maybe<T> : never
-      ) as A extends Maybe<infer T> ? Maybe<T> : never;
-}
-
-class NothingClass<A> implements IMaybe<A> {
-  readonly [Brand] = Brand;
-  readonly tag: 'nothing';
-  get base():  { tag: 'nothing'}  {
-    return { tag: 'nothing' };
-  }
-
-  get = () => undefined;
-  map = () => new NothingClass();
-  chain = () => new NothingClass();
-  apply = () => new NothingClass();
-  join = () => this as unknown as A extends Maybe<infer T> ? Maybe<T> : never;
-}
-
-type Just<A> = {
-  readonly tag: 'just',
-  readonly value: A,
-} & IMaybe<A>;
-type Nothing<A> = {
-  readonly tag: 'nothing',
-} & IMaybe<A>;
-
-export type Maybe<A> = Just<A> | Nothing<A>;
-
-export const Just = <A>(value: A): Maybe<A> => new JustClass(value);
-export const Nothing = <A>(): Maybe<A> => new NothingClass<A>();
-
-export const record = <R extends Record<string, Maybe<unknown>> | {}>(
+export const record = <R extends Record<string, Maybe<any>> | {}>(
   record: R
 ): Maybe<MaybeConstructType<R>> => {
   return Object.entries(record).reduce(
@@ -84,7 +30,7 @@ export const record = <R extends Record<string, Maybe<unknown>> | {}>(
   );
 };
 
-export const all = <T extends readonly Maybe<unknown>[] | []>(
+export const all = <T extends readonly Maybe<any>[] | []>(
   arr: T
 ): Maybe<MaybeConstructType<T>> => {
   return (arr as readonly Maybe<any>[]).reduce(
@@ -111,15 +57,15 @@ F extends (...args: P) => any
 };
 
 
-export const fromOptional = <A>(a: A | undefined): Maybe<NonOptional<A>> => {
-  if (isNonOptional(a)) return Just(a);
+export const fromOptional = <A>(a: A | undefined): Maybe<A> => {
+  if (a !== undefined) return Just(a);
   return Nothing();
 };
 
 export const fromNullable = <A>(
   a: A | null | undefined
-): Maybe<NonNullable<A>> => {
-  if (isNonNullable(a)) return Just(a);
+): Maybe<A> => {
+  if (a != null) return Just(a);
   return Nothing();
 };
 
