@@ -1,5 +1,5 @@
 import { Err, Ok, Result } from './result';
-import { Just, Maybe, Nothing } from './maybe.old';
+import { Just, Maybe, Nothing } from './maybe';
 import { Tuple } from './tuple';
 import { isType } from './src/type';
 import { curry, FunctionInputType, FunctionOutputType } from './src/function';

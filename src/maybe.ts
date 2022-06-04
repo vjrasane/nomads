@@ -17,7 +17,7 @@ export type Maybe<A> = Classes.Just<A> | Classes.Nothing<A>;
 export const Just = <A>(value: A): Maybe<A> => new Classes.Just(value);
 export const Nothing = <A>(): Maybe<A> => new Classes.Nothing<A>();
 
-export const record = <R extends Record<string, Maybe<any>> | {}>(
+export const record = <R extends Record<string, Maybe<any>>>(
   record: R
 ): Maybe<MaybeConstructType<R>> => {
   return Object.entries(record).reduce(
@@ -44,7 +44,7 @@ export const all = <T extends readonly Maybe<any>[] | []>(
 export const array = all;
 
 export const applyAll = <
-A extends readonly Maybe<unknown>[] | [],
+A extends readonly Maybe<any>[] | [],
 P extends any[] & MaybeConstructType<A>,
 F extends (...args: P) => any
 >(
@@ -80,6 +80,11 @@ export const fromFinite = (a: number): Maybe<number> => {
   return Just(a);
 };
 
+export const parseInt = (str: string): Maybe<number> =>
+  fromNumber(Number.parseInt(`${Number(str || 'NaN')}`));
+export const parseFloat = (str: string): Maybe<number> =>
+  fromNumber(Number.parseFloat(`${Number(str || 'NaN')}`));
+
 export const nth = <A>(index: number, arr: Array<A>): Maybe<A> =>
   fromOptional(arr[index]);
 
@@ -90,24 +95,22 @@ export const last = <A>(arr: Array<A>): Maybe<A> => nth(arr.length - 1, arr);
 export const find =
   <A, T extends readonly A[]>(f: (a: A) => boolean, arr: T): Maybe<A> => fromOptional(arr.find(f));
 
-// export const some = <A extends Array<Maybe<MaybeType<A[number]>>>> (arr: A): Maybe<MaybeType<A[number]>> =>
-// arr.reduce(
-//   (acc, curr): Maybe<MaybeType<A[number]>> => acc.or(curr),
-//   Nothing<MaybeType<A[number]>>()
-// );
+export const some = <A extends Array<Maybe<MaybeType<A[number]>>>> (arr: A): Maybe<MaybeType<A[number]>> =>
+arr.reduce(
+  (acc, curr): Maybe<MaybeType<A[number]>> => acc.or(curr),
+  Nothing<MaybeType<A[number]>>()
+);
 
-// export const values = <A extends Array<Maybe<any>>>(
-//   arr: A
-// ): Array<MaybeType<A[number]>> => {
-//   return arr.reduce(
-//     (acc: Array<MaybeType<A[number]>>, curr: A[number]): Array<MaybeType<A[number]>> =>
-//       fold<MaybeType<A[number]>, Array<MaybeType<A[number]>>>({
-//         nothing: () => acc,
-//         just: (v) => [...acc, v],
-//       }, curr),
-//     []
-//   );
-// };
+export const values = <A extends Array<Maybe<any>>>(arr: A): Array<MaybeType<A[number]>> => {
+  return arr.reduce(
+    (acc: Array<MaybeType<A[number]>>, curr: A[number]): Array<MaybeType<A[number]>> =>
+      curr.fold<Array<MaybeType<A[number]>>>({
+        nothing: () => acc,
+        just: (v) => [...acc, v],
+      }),
+    []
+  );
+};
 
 export const Maybe = {
   Just,
@@ -123,8 +126,8 @@ export const Maybe = {
   last,
   find,
   all,
-  // some,
-  // values,
+  some,
+  values,
   record,
   array,
   applyAll,

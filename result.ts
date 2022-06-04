@@ -1,5 +1,5 @@
 import { Either, Left, Right } from './either';
-import { Just, Maybe, Nothing } from './maybe.old';
+import { Just, Maybe, Nothing } from './maybe';
 import { curry, FunctionInputType, FunctionOutputType } from './src/function';
 import { NonEmptyArray } from './src/optional';
 import { isType } from './src/type';
@@ -214,16 +214,6 @@ export const apply =
       ): Result<ErrorType<A[number]>, ReturnType<F>> => {
       return map((args) => f(...(args as Parameters<F>)), all(args));
     };
-
-    const aaa = applyAll(
-      (a: number, b: string) => 'lol',
-      [Ok<number, number>(42), Ok<string, string>('str')]
-    );
-
-    const asd =    [Ok(42), Ok('str')] as const;
-    type P = { [P in keyof typeof asd]: ResultType<typeof asd[P]> }
-
-
 }
 
 
@@ -259,9 +249,8 @@ type ErrorType<R> = R extends I.Result<infer T, any> ? T : never;
 type ResultTypeConstruct<A extends readonly I.Result<any, any>[] | Record<string | symbol | number, I.Result<any, any>>> =  { -readonly [P in keyof A]: ResultType<A[P]> };
 
 const Constructor = <E, A>(data: I.Result<E, A>): Result<E, A> => ({
-  [Brand]: Brand,
-  result: data,
   ...data,
+  result: data,
   // tag: result.tag,
   // value: I.getValue(result).get(),
   // error: I.getError(result).get(),
