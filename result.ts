@@ -1,5 +1,5 @@
 import { Either, Left, Right } from './either';
-import { Just, Maybe, Nothing } from './maybe';
+import { Just, Maybe, Nothing } from './maybe.old';
 import { curry, FunctionInputType, FunctionOutputType } from './src/function';
 import { NonEmptyArray } from './src/optional';
 import { isType } from './src/type';
@@ -78,7 +78,7 @@ export const orElse =
     or(second, first);
 
 export const defaultTo =
-  <E, A>(def: A, r: Result<E, A>): Result<E, A> => 
+  <E, A>(def: A, r: Result<E, A>): Result<E, A> =>
     or(r, Ok(def));
 
 export const toEither = <E, A>(r: Result<E, A>): Either<E, A> => {
@@ -128,7 +128,7 @@ export const toString = <E, A>(r: Result<E, A>): string => {
 };
 
 
-export const chain = 
+export const chain =
 <E, A, B>(fab: (a: A) => Result<E, B>, m: Result<E, A>) => {
   switch(m.tag) {
   case 'ok':
@@ -139,7 +139,7 @@ export const chain =
 };
 
 
-export const join = 
+export const join =
 <E, A>(m: Result<E, A>): A extends Result<E, infer T> ? Result<E, T> : never => {
   return chain(
     mm => isType<Result<any, any>>(Brand, mm) ? mm : Ok(mm),
@@ -152,10 +152,10 @@ export const apply =
       (f) => I.map(
         (a) => typeof f === 'function'
           ? curry(f as unknown as (...args: any[]) => any)(a)
-          : a, 
+          : a,
         ra),
       rf);
-  
+
     export const record = <R extends Record<string, Result<any, any>>>(
       record: R
     ): Result<ErrorType<R[keyof R]>, ResultTypeConstruct<R>> => {
@@ -163,7 +163,7 @@ export const apply =
         (acc, [key, value]) => chain((a) => map((v) => ({ ...a, [key]: v }), value), acc)
         , Ok({})) as unknown as Result<ErrorType<R[keyof R]>, ResultTypeConstruct<R>>;
     };
-          
+
     export const all = <T extends readonly Result<any, any>[] | []>(
       arr: T
     ): Result<ErrorType<T[keyof T]>, ResultTypeConstruct<T>> => {
@@ -171,14 +171,14 @@ export const apply =
         (acc, curr): Result<ErrorType<T[keyof T]>, ResultTypeConstruct<T>> => {
           return chain(
             (a) => map(
-              (v) => [...a, v] as unknown as ResultTypeConstruct<T>, 
+              (v) => [...a, v] as unknown as ResultTypeConstruct<T>,
               curr),
             acc);
         },
         Ok([])
       );
     };
-  
+
     export const some = <A extends NonEmptyArray<Result<any, any>>>(
       arr: A
     ): Result<ErrorType<A[number]>, ResultType<A[number]>> => {
@@ -186,8 +186,8 @@ export const apply =
         (acc, curr): Result<ErrorType<A[number]>, ResultType<A[number]>> => or(acc, curr)
       );
     };
-  
-  
+
+
     export const values = <A extends Array<Result<any, any>>>(
       arr: A
     ): Array<ResultType<A[number]>> => {
@@ -200,7 +200,7 @@ export const apply =
         []
       );
     };
-  
+
     export const applyAll = <
     A extends readonly Result<any, any>[] | [],
     P extends any[] & ResultTypeConstruct<A>,
@@ -212,7 +212,7 @@ export const apply =
         f: F,
         args: A
       ): Result<ErrorType<A[number]>, ReturnType<F>> => {
-      return map((args) => f(...(args as Parameters<F>)), all(args)); 
+      return map((args) => f(...(args as Parameters<F>)), all(args));
     };
 
     const aaa = applyAll(
@@ -223,7 +223,7 @@ export const apply =
     const asd =    [Ok(42), Ok('str')] as const;
     type P = { [P in keyof typeof asd]: ResultType<typeof asd[P]> }
 
-    
+
 }
 
 
@@ -288,7 +288,7 @@ const Constructor = <E, A>(data: I.Result<E, A>): Result<E, A> => ({
 export const Ok = <E = any, A = any>(value: A): Result<E, A> => Constructor(I.Ok(value));
 export const Err = <E = any, A = any>(error: E): Result<E, A> => Constructor(I.Err(error));
 
-export const join = 
+export const join =
 <E, A>(r: I.Result<E, A>): A extends Result<E, infer T> ? Result<E, T> : never => {
   return Constructor(I.join(r)) as  A extends Result<E, infer T> ? Result<E, T> : never;
 };
@@ -327,7 +327,7 @@ export const applyAll = <
 //   }
 // };
 
-// const join = 
+// const join =
 //   <E, A>(r: I.Result<E, A>): A extends Result<E, infer T> ? Result<E, T> : never => {
 //     return chain(
 //       rr => isType<Result<E, any>>(Brand, rr) ? rr : Ok(rr), r
@@ -345,20 +345,20 @@ export const applyAll = <
 //       a => curr.map((v) => [...(a as readonly unknown[]), v ]  as unknown as ResultTypeConstruct<T>)
 //     ), Ok([]));
 // };
-    
+
 // export const some = <A extends NonEmptyArray<Result<E, any>>, E = any>(arr: A): Result<E, ResultType<A[number]>> => {
 //   return arr.reduce((acc, curr): Result<E, ResultType<A[number]>> => acc.or(curr));
 // };
-    
+
 // export const values = <A extends Array<Result<any, any>>>(arr: A): Array<ResultType<A[number]>> => {
-//   return arr.reduce((acc: Array<ResultType<A[number]>>, curr: A[number]): Array<ResultType<A[number]>> => 
+//   return arr.reduce((acc: Array<ResultType<A[number]>>, curr: A[number]): Array<ResultType<A[number]>> =>
 //     curr.fold<Array<ResultType<A[number]>>>({
 //       err: () => acc,
 //       ok: v => [...acc, v]
 //     })
 //   , []);
 // };
-  
+
 // export const array = all;
 
 // export const record = <R extends Record<string, Result<any, any>>>(record: R): Result<ErrorType<R[keyof R]>, ResultTypeConstruct<R>> => {

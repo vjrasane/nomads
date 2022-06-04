@@ -1,5 +1,5 @@
 import { Err, Ok, Result } from './result';
-import { Just, Maybe, Nothing } from './maybe';
+import { Just, Maybe, Nothing } from './maybe.old';
 import { Tuple } from './tuple';
 import { isType } from './src/type';
 import { curry, FunctionInputType, FunctionOutputType } from './src/function';
@@ -61,7 +61,7 @@ export const orElse =
     (second: Either<E, A>): Either<E, A> =>
       or(second)(first);
 
-  
+
 export const getOrElse =
 <E, A>(def: A) =>
     (r: Either<E, A>): A => {
@@ -221,7 +221,7 @@ const chain = <E, A, B>(fab: (a: A) => Either<E, B>, e: I.Either<E, A>): Either<
     return EitherConstructor<E, B>(e);
   }
 };
-const join = 
+const join =
   <A, B>(e: I.Either<A, B>): B extends Either<A, infer T> ? Either<A, T> : never => {
     return chain(
       ee => isType<Either<A, any>>(Brand, ee) ? ee : Right(ee), e
@@ -250,16 +250,16 @@ export const all = <T extends readonly Either<any, any>[] | []>(arr: T): Either<
 export const some = <A extends NonEmptyArray<Either<E, any>>, E = any>(arr: A): Either<E, EitherRightType<A[number]>> => {
   return arr.reduce((acc, curr): Either<E, EitherRightType<A[number]>> => acc.or(curr));
 };
-    
+
 export const values = <A extends Array<Either<any, any>>>(arr: A): Array<EitherRightType<A[number]>> => {
-  return arr.reduce((acc: Array<EitherRightType<A[number]>>, curr: A[number]): Array<EitherRightType<A[number]>> => 
+  return arr.reduce((acc: Array<EitherRightType<A[number]>>, curr: A[number]): Array<EitherRightType<A[number]>> =>
     curr.fold<Array<EitherRightType<A[number]>>>({
       left: () => acc,
       right: v => [...acc, v]
     })
   , []);
 };
-  
+
 export const array = all;
 
 export const record = <R extends Record<string, Either<any, any>>>(record: R): Either<EitherLeftType<R[keyof R]>, EitherTypeConstruct<R>> => {
