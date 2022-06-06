@@ -100,7 +100,7 @@ describe('Maybe', () => {
     });
 
     it('maps nothing value', () => {
-      const mapped = Nothing<string>().map((str) => parseInt(str, 10));
+      const mapped = Nothing().map((str) => parseInt(str, 10));
       expect(mapped.base).toEqual({ tag: 'nothing' });
     });
   });
@@ -139,7 +139,7 @@ describe('Maybe', () => {
     });
 
     it('nothing or just returns second value', () => {
-      const or = Nothing<number>().or(Just(42));
+      const or = Nothing().or(Just(42));
       expect(or.base).toEqual({ tag: 'just', value: 42 });
     });
 
@@ -161,7 +161,7 @@ describe('Maybe', () => {
     });
 
     it('nothing orElse just returns second value', () => {
-      const or = Nothing<number>().orElse(Just(42));
+      const or = Nothing().orElse(Just(42));
       expect(or.base).toEqual({ tag: 'just', value: 42 });
     });
 
@@ -200,7 +200,7 @@ describe('Maybe', () => {
     });
 
     it('filters nothing with condition', () => {
-      const filtered = Nothing<number>().filter((n) => n < 0);
+      const filtered = Nothing().filter((n) => n < 0);
       expect(filtered.base).toEqual({ tag: 'nothing' });
     });
   });
@@ -295,7 +295,7 @@ describe('Maybe', () => {
     });
 
     it('joins nothing value', () => {
-      const joined = Nothing<Maybe<number>>().join();
+      const joined = Nothing().join();
       expect(joined.base).toEqual({ tag: 'nothing' });
     });
 
@@ -337,7 +337,7 @@ describe('Maybe', () => {
 
     it('folds nothing value', () => {
       expect(
-        Nothing<number>().fold({
+        Nothing().fold({
           nothing: () => 69,
           just: (n) => n * 2,
         })
@@ -351,23 +351,23 @@ describe('Maybe', () => {
     });
 
     it('gets nothing value', () => {
-      expect(Nothing<number>().getOrElse(42)).toBe(42);
+      expect(Nothing().getOrElse(42)).toBe(42);
     });
 
     it('gets nothing default value', () => {
-      expect(Nothing<number>().default(42).getOrElse(0)).toBe(42);
+      expect(Nothing().default(42).getOrElse(0)).toBe(42);
     });
   });
 
   describe('toResult', () => {
-    it.skip('gets ok from just value', () => {
+    it('gets ok from just value', () => {
       const res = Just(42).toResult('error');
-      expect(res.result).toEqual({ tag: 'ok', value: 42 });
+      expect(res.base).toEqual({ tag: 'ok', value: 42 });
     });
 
-    it.skip('gets err from nothing value', () => {
+    it('gets err from nothing value', () => {
       const res = Nothing().toResult('error');
-      expect(res.result).toEqual({ tag: 'err', error: 'error' });
+      expect(res.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
 
@@ -564,7 +564,7 @@ describe('Maybe', () => {
     });
 
     it('returns just for an array with single just', () => {
-      expect(Maybe.some([Nothing<number>(), Just(2), Nothing<number>()]).base).toEqual({
+      expect(Maybe.some([Nothing(), Just(2), Nothing()]).base).toEqual({
         tag: 'just',
         value: 2,
       });
@@ -784,7 +784,7 @@ describe('Maybe', () => {
     });
 
     it('applies function to array with one nothing', () => {
-      const applied: Maybe<number> = Maybe.applyAll((a: number, b: number) => a + b, [Just(42), Nothing<number>()]);
+      const applied: Maybe<number> = Maybe.applyAll((a: number, b: number) => a + b, [Just(42), Nothing()]);
       expect(applied.base).toEqual({ tag: 'nothing' });
     });
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Maybe, Just, MaybeConstructType, MaybeType, NestedMaybeType } from '../src/maybe';
+import { Maybe, Just, MaybeType, MaybeConstructType } from '../src/maybe';
 
 type MaybeNumber = MaybeType<Maybe<number>>;
 () => {
@@ -34,5 +34,5 @@ type MaybeArray = MaybeConstructType<[
   const returned = Maybe
     .all([Just(42), Just(true), Just('str')])
     .getOrElse([42, true, 'str']);
-  const reassign: MaybeRecord = returned;
+  const reassign: MaybeArray = returned;
 };

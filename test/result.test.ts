@@ -4,7 +4,7 @@ import { Result, Err, Ok } from '../result';
 describe('Result', () => {
   it('Ok', () => {
     const ok = Ok(42);
-    expect(ok.result).toEqual({ tag: 'ok', value: 42 });
+    expect(ok.base).toEqual({ tag: 'ok', value: 42 });
     expect(ok.tag).toBe('ok');
     expect(ok.get()).toBe(42);
     expect(ok.getError().get()).toBe(undefined);
@@ -13,7 +13,7 @@ describe('Result', () => {
 
   it('Err', () => {
     const err = Err('error');
-    expect(err.result).toEqual({ tag: 'err', error: 'error' });
+    expect(err.base).toEqual({ tag: 'err', error: 'error' });
     expect(err.tag).toBe('err');
     expect(err.get()).toBe(undefined);
     expect(err.getError().get()).toBe('error');
@@ -22,14 +22,14 @@ describe('Result', () => {
 
   describe('functor laws', () => {
     it('identity', () => {
-      expect(Ok(42).map((v) => v).result).toEqual(Ok(42).result);
+      expect(Ok(42).map((v) => v).base).toEqual(Ok(42).base);
     });
 
     it('composition', () => {
       const f = (v: number) => v * 2;
       const g = (v: number) => v + 2;
-      expect(Ok(42).map(f).map(g).result).toEqual(
-        Ok(42).map((v) => g(f(v))).result
+      expect(Ok(42).map(f).map(g).base).toEqual(
+        Ok(42).map((v) => g(f(v))).base
       );
     });
   });
@@ -38,21 +38,21 @@ describe('Result', () => {
     it('identity', () => {
       const left = Ok((v: number) => v).apply(Ok(42));
       const right = Ok(42);
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
 
     it('homomorphism', () => {
       const f = (v: number) => v * 2;
       const left = Ok(f).apply(Ok(42));
       const right = Ok(f(42));
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
 
     it('interchange', () => {
       const f = (v: number) => v * 2;
       const left = Ok(f).apply(Ok(42));
       const right = Ok((g: typeof f) => g(42)).apply(Ok(f));
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
 
     it('composition', () => {
@@ -68,7 +68,7 @@ describe('Result', () => {
         .apply(v)
         .apply(w);
       const right = u.apply(v.apply(w));
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
   });
 
@@ -78,14 +78,14 @@ describe('Result', () => {
       const f = (n: number) => Ok(n * 2);
       const left = ret(42).chain(f);
       const right = f(42);
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
 
     it('right identity', () => {
       const ret = <A>(n: A) => Ok(n);
       const left = Ok(42).chain(ret);
       const right = Ok(42);
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
 
     it('associativity', () => {
@@ -94,104 +94,104 @@ describe('Result', () => {
       const g = (n: number) => Ok(n * 2);
       const left = m.chain(f).chain(g);
       const right = m.chain((v) => f(v).chain(g));
-      expect(left.result).toEqual(right.result);
+      expect(left.base).toEqual(right.base);
     });
   });
 
   describe('map', () => {
     it('maps ok value', () => {
       const mapped = Ok(42).map((num) => num * 2);
-      expect(mapped.result).toEqual({ tag: 'ok', value: 84 });
+      expect(mapped.base).toEqual({ tag: 'ok', value: 84 });
     });
 
     it('maps err value', () => {
       const mapped = Err<string, number>('error').map((num) => num * 2);
-      expect(mapped.result).toEqual({ tag: 'err', error: 'error' });
+      expect(mapped.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
 
   describe('mapError', () => {
     it('maps err value', () => {
-      const mapped = Err<string, number>('error').mapError((str) => str.toUpperCase());
-      expect(mapped.result).toEqual({ tag: 'err', error: 'ERROR' });
+      const mapped = Err('error').mapError((str) => str.toUpperCase());
+      expect(mapped.base).toEqual({ tag: 'err', error: 'ERROR' });
     });
 
     it('maps ok value', () => {
-      const mapped = Ok<string, number>(42).mapError((str) => str.toUpperCase());
-      expect(mapped.result).toEqual({ tag: 'ok', value: 42 });
+      const mapped = Ok(42).mapError((str) => str.toUpperCase());
+      expect(mapped.base).toEqual({ tag: 'ok', value: 42 });
     });
   });
 
   describe('chain', () => {
     it('chains ok value', () => {
       const chained = Ok(42).chain((num) => Ok(num * 2));
-      expect(chained.result).toEqual({ tag: 'ok', value: 84 });
+      expect(chained.base).toEqual({ tag: 'ok', value: 84 });
     });
 
     it('chains err value', () => {
       const chained = Err<string, number>('error').chain((num) => Ok(num * 2));
-      expect(chained.result).toEqual({ tag: 'err', error: 'error' });
+      expect(chained.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
 
   describe('or', () => {
     it('ok or ok returns ok', () => {
       const or = Ok(42).or(Ok(0));
-      expect(or.result).toEqual({ tag: 'ok', value: 42 });
+      expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('ok or err returns ok', () => {
-      const or = Ok<string, number>(42).or(Err('error'));
-      expect(or.result).toEqual({ tag: 'ok', value: 42 });
+      const or = Ok(42).or(Err('error'));
+      expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('err or ok returns ok', () => {
-      const or = Err<string, number>('error').or(Ok(42));
-      expect(or.result).toEqual({ tag: 'ok', value: 42 });
+      const or = Err('error').or(Ok(42));
+      expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('err or err returns err', () => {
       const or = Err('first').or(Err('second'));
-      expect(or.result).toEqual({ tag: 'err', error: 'first' });
+      expect(or.base).toEqual({ tag: 'err', error: 'first' });
     });
   });
 
   describe('orElse', () => {
     it('ok orElse ok returns ok', () => {
       const or = Ok(42).orElse(Ok(0));
-      expect(or.result).toEqual({ tag: 'ok', value: 0 });
+      expect(or.base).toEqual({ tag: 'ok', value: 0 });
     });
 
     it('ok orElse err returns ok', () => {
-      const or = Ok<string, number>(42).orElse(Err('error'));
-      expect(or.result).toEqual({ tag: 'ok', value: 42 });
+      const or = Ok(42).orElse(Err('error'));
+      expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('err orElse ok returns ok', () => {
       const or = Err<string, number>('error').orElse(Ok(42));
-      expect(or.result).toEqual({ tag: 'ok', value: 42 });
+      expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('err orElse err returns err', () => {
       const or = Err('first').orElse(Err('second'));
-      expect(or.result).toEqual({ tag: 'err', error: 'second' });
+      expect(or.base).toEqual({ tag: 'err', error: 'second' });
     });
   });
 
   describe('default', () => {
     it('ok defaults to itself', () => {
       const def = Ok(42).default(0);
-      expect(def.result).toEqual({ tag: 'ok', value: 42 });
+      expect(def.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('err defaults to default', () => {
       const def = Err('error').default(0);
-      expect(def.result).toEqual({ tag: 'ok', value: 0 });
+      expect(def.base).toEqual({ tag: 'ok', value: 0 });
     });
 
     it('err defaults to first default', () => {
       const def = Err('error').default(0).default(-1);
-      expect(def.result).toEqual({ tag: 'ok', value: 0 });
+      expect(def.base).toEqual({ tag: 'ok', value: 0 });
     });
   });
 
@@ -213,29 +213,15 @@ describe('Result', () => {
     });
   });
 
-  describe('toEither', () => {
-    it('gets right from ok value', () => {
-      const either = Ok(42).toEither();
-      expect(either.tag).toBe('right');
-      expect(either.getRight().get()).toBe(42);
-    });
-
-    it('gets left from err value', () => {
-      const either = Err('error').toEither();
-      expect(either.tag).toBe('left');
-      expect(either.getLeft().get()).toBe('error');
-    });
-  });
-
   describe('toMaybe', () => {
     it('gets just from ok value', () => {
       const maybe = Ok(42).toMaybe();
-      expect(maybe.maybe).toEqual({ tag: 'just', value: 42 });
+      expect(maybe.base).toEqual({ tag: 'just', value: 42 });
     });
 
     it('gets nothing from err value', () => {
       const maybe = Err('error').toMaybe();
-      expect(maybe.maybe).toEqual({ tag: 'nothing' });
+      expect(maybe.base).toEqual({ tag: 'nothing' });
     });
   });
 
@@ -257,24 +243,24 @@ describe('Result', () => {
   describe('getValue', () => {
     it('gets just from ok value', () => {
       const maybe = Ok(42).getValue();
-      expect(maybe.maybe).toEqual({ tag: 'just', value: 42 });
+      expect(maybe.base).toEqual({ tag: 'just', value: 42 });
     });
 
     it('gets nothing from err value', () => {
       const maybe = Err('error').getValue();
-      expect(maybe.maybe).toEqual({ tag: 'nothing' });
+      expect(maybe.base).toEqual({ tag: 'nothing' });
     });
   });
 
   describe('getError', () => {
     it('gets nothing from ok value', () => {
       const maybe = Ok(42).getError();
-      expect(maybe.maybe).toEqual({ tag: 'nothing' });
+      expect(maybe.base).toEqual({ tag: 'nothing' });
     });
 
     it('gets just from err value', () => {
       const maybe = Err('error').getError();
-      expect(maybe.maybe).toEqual({ tag: 'just', value: 'error' });
+      expect(maybe.base).toEqual({ tag: 'just', value: 'error' });
     });
   });
 
@@ -291,31 +277,31 @@ describe('Result', () => {
   describe('apply', () => {
     it('ok function applies to ok value', () => {
       const applied = Ok((str: string) => parseInt(str, 10)).apply(Ok('42'));
-      expect(applied.result).toEqual({ tag: 'ok', value: 42 });
+      expect(applied.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('ok function applies to err', () => {
       const applied = Ok((str: string) => parseInt(str, 10)).apply(Err<string, string>('error'));
-      expect(applied.result).toEqual({ tag: 'err', error: 'error' });
+      expect(applied.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it ('cannot apply ok not containing a function', () => {
       const applied = Ok(0)
         /* @ts-expect-error testing */
         .apply(Ok(42));
-      expect(applied.result).toEqual({tag: 'ok', value: 42 });
+      expect(applied.base).toEqual({tag: 'ok', value: 42 });
     });
 
     it('cannot apply err to ok value', () => {
       const applied = Err('error')
       /* @ts-expect-error testing */
         .apply(Ok('42'));
-      expect(applied.result).toEqual({ tag: 'err', error: 'error' });
+      expect(applied.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('err value applies to err', () => {
       const applied = Err('error').apply(Err('apply'));
-      expect(applied.result).toEqual({ tag: 'err', error: 'error' });
+      expect(applied.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('applies a curried function multiple times to ok values', () => {
@@ -323,7 +309,7 @@ describe('Result', () => {
         .apply(Ok(1))
         .apply(Ok(2))
         .apply(Ok(3));
-      expect(applied.result).toEqual({ tag: 'ok', value: 7 });
+      expect(applied.base).toEqual({ tag: 'ok', value: 7 });
     });
 
     it('applies a curried function multiple times to ok and err values', () => {
@@ -331,7 +317,7 @@ describe('Result', () => {
         .apply(Ok(1))
         .apply(Err('error'))
         .apply(Ok(3));
-      expect(applied.result).toEqual({ tag: 'err', error: 'error' });
+      expect(applied.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('autocurries function', () => {
@@ -339,82 +325,82 @@ describe('Result', () => {
         .apply(Ok(1))
         .apply(Ok(2))
         .apply(Ok(3));
-      expect(applied.result).toEqual({ tag: 'ok', value: 7 });
+      expect(applied.base).toEqual({ tag: 'ok', value: 7 });
     });
   });
 
   describe('join', () => {
     it('joins nested ok values', () => {
       const joined = Ok(Ok(42)).join();
-      expect(joined.result).toEqual({ tag: 'ok', value: 42 });
+      expect(joined.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('joins nested ok and err values', () => {
       const joined = Ok(Err('error')).join();
-      expect(joined.result).toEqual({ tag: 'err', error: 'error' });
+      expect(joined.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('joins nested err value', () => {
       const joined = Err('error').join();
-      expect(joined.result).toEqual({ tag: 'err', error: 'error' });
+      expect(joined.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('cannot join single ok value', () => {
       const joined = Ok(42).join();
       /* @ts-expect-error testing */
-      expect(joined.result).toEqual({ tag: 'ok', value: 42 });
+      expect(joined.base).toEqual({ tag: 'ok', value: 42 });
     });
   });
 
   describe('fromOptional', () => {
     it('gets ok from value', () => {
       const res = Maybe.fromOptional(42).toResult('error');
-      expect(res.result).toEqual({ tag: 'ok', value: 42 });
+      expect(res.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('gets err from undefined', () => {
       const res = Maybe.fromOptional(undefined).toResult('error');
-      expect(res.result).toEqual({ tag: 'err', error: 'error' });
+      expect(res.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('gets ok from null', () => {
       const res = Maybe.fromOptional(null).toResult('error');
-      expect(res.result).toEqual({ tag: 'ok', value: null });
+      expect(res.base).toEqual({ tag: 'ok', value: null });
     });
   });
 
   describe('fromNullable', () => {
     it('gets ok from value', () => {
       const res = Maybe.fromNullable(42).toResult('error');
-      expect(res.result).toEqual({ tag: 'ok', value: 42 });
+      expect(res.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('gets err from undefined', () => {
       const res = Maybe.fromNullable(undefined).toResult('error');
-      expect(res.result).toEqual({ tag: 'err', error: 'error' });
+      expect(res.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('gets nothing from null', () => {
       const res = Maybe.fromNullable(null).toResult('error');
-      expect(res.result).toEqual({ tag: 'err', error: 'error' });
+      expect(res.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
 
   describe('fromNumber', () => {
     it('gets just from number', () => {
       const res = Maybe.fromNumber(42).toResult('error');
-      expect(res.result).toEqual({ tag: 'ok', value: 42 });
+      expect(res.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('gets nothing from NaN', () => {
       const res = Maybe.fromNumber(NaN).toResult('error');
-      expect(res.result).toEqual({ tag: 'err', error: 'error' });
+      expect(res.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
 
   describe('unwrap', () => {
     it('switch case for ok', () => {
-      const unwrapped = Ok(42).result;
+      const unwrapped = Ok(42).base;
       switch (unwrapped.tag) {
       case 'ok': {
         expect(unwrapped.value).toBe(42);
@@ -426,7 +412,7 @@ describe('Result', () => {
     });
 
     it('switch case for err', () => {
-      const unwrapped = Err('error').result;
+      const unwrapped = Err('error').base;
       switch (unwrapped.tag) {
       case 'err': {
         expect(unwrapped.error).toBe('error');
@@ -444,7 +430,7 @@ describe('Result', () => {
         first: Ok(1),
         second: Ok(2),
         third: Ok(3)
-      }).result).toEqual({
+      }).base).toEqual({
         tag: 'ok',
         value: {
           first: 1,
@@ -459,7 +445,7 @@ describe('Result', () => {
         first: Ok(1),
         second: Err('error'),
         third: Ok(3)
-      }).result).toEqual({
+      }).base).toEqual({
         tag: 'err',
         error: 'error'
       });
@@ -470,7 +456,7 @@ describe('Result', () => {
         first:  Err('first'),
         second: Err('second'),
         third: Err('third')
-      }).result).toEqual({
+      }).base).toEqual({
         tag: 'err',
         error: 'first'
       });
@@ -479,25 +465,25 @@ describe('Result', () => {
 
   describe('all', () => {
     it('gets ok from array of oks', () => {
-      expect(Result.all([Ok(1), Ok(2), Ok(3)]).result).toEqual({
+      expect(Result.all([Ok(1), Ok(2), Ok(3)]).base).toEqual({
         tag: 'ok', value: [1, 2, 3]
       });
     });
 
     it('gets err from array with single err', () => {
-      expect(Result.all([Ok(1), Err('error'), Ok(3)]).result).toEqual({
+      expect(Result.all([Ok(1), Err('error'), Ok(3)]).base).toEqual({
         tag: 'err', error: 'error'
       });
     });
 
     it('gets first error from array with multiple errors', () => {
-      expect(Result.all([Err('first'), Err('second'), Err('third')]).result).toEqual({
+      expect(Result.all([Err('first'), Err('second'), Err('third')]).base).toEqual({
         tag: 'err', error: 'first'
       });
     });
 
     it('gets ok from empty array', () => {
-      expect(Result.all([]).result).toEqual({
+      expect(Result.all([]).base).toEqual({
         tag: 'ok', value: []
       });
     });
@@ -513,25 +499,25 @@ describe('Result', () => {
 
   describe('array', () => {
     it('gets ok from array of oks', () => {
-      expect(Result.array([Ok(1), Ok(2), Ok(3)]).result).toEqual({
+      expect(Result.array([Ok(1), Ok(2), Ok(3)]).base).toEqual({
         tag: 'ok', value: [1, 2, 3]
       });
     });
 
     it('gets err from array with single err', () => {
-      expect(Result.array([Ok(1), Err('error'), Ok(3)]).result).toEqual({
+      expect(Result.array([Ok(1), Err('error'), Ok(3)]).base).toEqual({
         tag: 'err', error: 'error'
       });
     });
 
     it('gets first error from array with multiple errors', () => {
-      expect(Result.array([Err('first'), Err('second'), Err('third')]).result).toEqual({
+      expect(Result.array([Err('first'), Err('second'), Err('third')]).base).toEqual({
         tag: 'err', error: 'first'
       });
     });
 
     it('gets ok from empty array', () => {
-      expect(Result.array([]).result).toEqual({
+      expect(Result.array([]).base).toEqual({
         tag: 'ok', value: []
       });
     });
@@ -547,19 +533,19 @@ describe('Result', () => {
   describe('some', () => {
     it('gets first error from array with errors', () => {
       expect(
-        Result.some([Err('first'), Err('second'), Err('third')]).result
+        Result.some([Err('first'), Err('second'), Err('third')]).base
       ).toEqual({ tag: 'err', error: 'first'});
     });
 
     it('gets ok from array with single ok', () => {
       expect(
-        Result.some([Err('first'), Ok(2), Err('third')]).result
+        Result.some([Err('first'), Ok(2), Err('third')]).base
       ).toEqual({ tag: 'ok', value: 2 });
     });
 
     it('gets first ok from array with multiple oks', () => {
       expect(
-        Result.some([Ok(1), Ok(2), Ok(3)]).result
+        Result.some([Ok(1), Ok(2), Ok(3)]).base
       ).toEqual({ tag: 'ok', value: 1 });
     });
   });
@@ -587,12 +573,12 @@ describe('Result', () => {
   describe('applyAll', () => {
     it ('applies function to array of oks', () => {
       const applied = Result.applyAll((a, b) => a + b, [Ok(42), Ok(69)]);
-      expect(applied.result).toEqual({tag: 'ok', value: 111});
+      expect(applied.base).toEqual({tag: 'ok', value: 111});
     });
 
     it ('applies function to array with one err', () => {
       const applied = Result.applyAll((a, b) => a + b, [Ok(42), Err('error')]);
-      expect(applied.result).toEqual({tag: 'err', error: 'error' });
+      expect(applied.base).toEqual({tag: 'err', error: 'error' });
     });
 
     it ('test typings', () => {

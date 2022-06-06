@@ -5,17 +5,17 @@ import { isType } from './type';
 import * as Classes from "./maybe.classes";
 
 
-type MaybeType<M> = M extends Maybe<infer T>
-  ? T : never;
-
-type MaybeConstructType<
-  A extends readonly Maybe<unknown>[] | Record<string | symbol | number, Maybe<unknown>>
-> = { -readonly [P in keyof A]: MaybeType<A[P]> };
-
 export type Maybe<A> = Classes.Just<A> | Classes.Nothing<A>;
 
 export const Just = <A>(value: A): Maybe<A> => new Classes.Just(value);
-export const Nothing = <A>(): Maybe<A> => new Classes.Nothing<A>();
+export const Nothing = <A = any>(): Maybe<A> => new Classes.Nothing<A>();
+
+export type MaybeType<M> = M extends Maybe<infer T>
+  ? T : never;
+
+export type MaybeConstructType<
+  A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>
+> = { -readonly [P in keyof A]: MaybeType<A[P]> };
 
 export const record = <R extends Record<string, Maybe<any>>>(
   record: R
