@@ -6,7 +6,7 @@ export type Maybe<A> = Class.Just<A> | Class.Nothing<A>;
 export const Just = <A>(value: A): Maybe<A> => new Class.Just(value);
 export const Nothing = <A = any>(): Maybe<A> => new Class.Nothing<A>();
 
-export const record = <R extends Record<string, Maybe<any>>>(
+export const record = <R extends Record<string | number | symbol, Maybe<any>>>(
   record: R
 ): Maybe<MaybeConstructType<R>> => {
   return Object.entries(record).reduce(

@@ -13,3 +13,5 @@ export const curry = (f: (...args: any[]) => any): (...args: any[]) => any => {
       : (...args: any) => curried(...cargs, ...args);
   return curried;
 };
+
+export type NonEmptyArray<T> = [T, ...T[]];

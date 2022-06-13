@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Maybe, Just, MaybeType, MaybeConstructType } from '../src/maybe';
+import { Maybe, Just } from '../maybe';
+import { MaybeType, MaybeConstructType } from '../src/maybe.class';
 
 type MaybeNumber = MaybeType<Maybe<number>>;
 () => {

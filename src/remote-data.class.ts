@@ -1,5 +1,5 @@
 import { Just, Maybe, Nothing } from "../maybe";
-import { curry, FunctionInputType, FunctionOutputType } from "./function";
+import { curry, FunctionInputType, FunctionOutputType } from "./utils";
 import { Fold, RemoteData } from "./remote-data.api";
 
 export type RemoteDataType<R> = R extends RemoteData<any, infer T>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Maybe, Just, Nothing } from '../maybe';
-// import './maybe.types';
+import './maybe.types';
 
 describe('Maybe', () => {
   it('Nothing', () => {

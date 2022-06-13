@@ -1,6 +1,6 @@
 import { Either, Left, Right } from "../either";
 import { Just, Maybe, Nothing } from "../maybe";
-import { curry, FunctionInputType, FunctionOutputType } from "./function";
+import { curry, FunctionInputType, FunctionOutputType } from "./utils";
 import { Fold, Result } from "./result.api";
 
 export type ResultType<R> = R extends Result<any, infer T>

@@ -1,5 +1,5 @@
 import * as Class from "./either.class";
-import { NonEmptyArray } from "./optional";
+import { NonEmptyArray } from "./utils";
 import { LeftType, EitherConstructType, EitherType } from "./either.class";
 
 export type Fold<E, A, B> = {
@@ -12,7 +12,7 @@ export type Either<E, A> = Class.Right<E, A> | Class.Left<E, A>;
 export const Right = <A, E = any>(value: A): Either<E, A> => new Class.Right(value);
 export const Left = <E, A = any>(value: E): Either<E, A> => new Class.Left(value);
 
-export const record = <R extends Record<string, Either<any, any>>>(
+export const record = <R extends Record<string | number | symbol, Either<any, any>>>(
 	record: R
   ): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => {
 	return Object.entries(record).reduce(

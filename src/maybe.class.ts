@@ -1,5 +1,5 @@
 import { Err, Ok, Result } from '../result';
-import { curry, FunctionInputType, FunctionOutputType } from './function';
+import { curry, FunctionInputType, FunctionOutputType } from './utils';
 import { Maybe } from './maybe.api';
 
 export type MaybeType<M> = M extends Maybe<infer T>

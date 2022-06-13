@@ -16,7 +16,7 @@ const mapValues = <K extends symbol | string | number, R extends Record<K, unkno
 	  }), {})  as { [P in keyof R]: B };
   
   
-const promiseRecord = <R extends Record<string, Promise<any>>>(record: R): Promise<{ [P in keyof R]: Awaited<R[P]> }> => 
+const promiseRecord = <R extends Record<string | number | symbol, Promise<any>>>(record: R): Promise<{ [P in keyof R]: Awaited<R[P]> }> => 
 	Promise.all(Object.entries(record)
 		.map(async ([key, value]) => [key, await value]))
 		.then(entries => entries.reduce(

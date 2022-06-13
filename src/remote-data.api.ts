@@ -1,6 +1,6 @@
 import * as Class from "./remote-data.class";
 import { ErrorType, RemoteDataConstructType, RemoteDataType } from "./remote-data.class";
-import { NonEmptyArray } from "./optional";
+import { NonEmptyArray } from "./utils";
 import Result from "../result";
 
 export type Fold<E, A, B> = {
@@ -18,7 +18,7 @@ export const Failure = <E, A = any>(error: E): RemoteData<E, A> => new Class.Fai
 export const Loading = <E = any, A = any>(): RemoteData<E, A> => new Class.Loading();
 export const NotAsked = <E = any, A = any>(): RemoteData<E, A> => new Class.NotAsked();
 
-export const record = <R extends Record<string, RemoteData<any, any>>>(
+export const record = <R extends Record<string | number | symbol, RemoteData<any, any>>>(
 	record: R
   ): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => {
 	return Object.entries(record).reduce(

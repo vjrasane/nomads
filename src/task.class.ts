@@ -1,6 +1,5 @@
-import { curry, FunctionInputType, FunctionOutputType } from "./function";
+import { curry, FunctionInputType, FunctionOutputType } from "./utils";
 import { Err, Result } from "./result.api";
-
 
 export type TaskType<T> = T extends Task<any, infer A> ? A : never;
 

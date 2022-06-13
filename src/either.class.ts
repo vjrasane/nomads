@@ -2,7 +2,7 @@ import { Just, Maybe, Nothing } from "../maybe";
 import Result, { Err, Ok } from "../result";
 import { Either, Fold } from "./either.api";
 import { Tuple } from "../tuple";
-import { curry, FunctionInputType, FunctionOutputType } from "./function";
+import { curry, FunctionInputType, FunctionOutputType } from "./utils";
 
 export type EitherType<R> = R extends Either<any, infer T>
   ? T : never;
@@ -84,7 +84,7 @@ abstract class AEither<E, A> implements IEither<E, A> {
 	fold = <B>(f: Fold<E, A, B>) => this.self.tag === "right" ? f.right(this.self.value) : f.left(this.self.value);
 	toMaybe = () => this.getRight();
 	toResult = () => this.self.tag === "right" ? Ok(this.self.value) : Err(this.self.value);
-	toTuple = () => Tuple.of(this.getLeft(), this.getRight());
+	toTuple = () => Tuple(this.getLeft(), this.getRight());
 	getRight = () => this.self.tag === "right" ? Just(this.self.value) : Nothing<A>();
 	getLeft = () => this.self.tag === "right" ? Nothing<E>() : Just(this.self.value);
 	toString = () => {

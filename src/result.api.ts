@@ -1,5 +1,5 @@
 import * as Class from "./result.class";
-import { NonEmptyArray } from "./optional";
+import { NonEmptyArray } from "./utils";
 import { ErrorType, ResultConstructType, ResultType } from "./result.class";
 
 export type Fold<E, A, B> = {
@@ -12,7 +12,7 @@ export type Result<E, A> = Class.Ok<E, A> | Class.Err<E, A>;
 export const Ok = <A, E = any>(value: A): Result<E, A> => new Class.Ok(value);
 export const Err = <E, A = any>(error: E): Result<E, A> => new Class.Err(error);
 
-export const record = <R extends Record<string, Result<any, any>>>(
+export const record = <R extends Record<string | number | symbol, Result<any, any>>>(
 	record: R
   ): Result<ErrorType<R[keyof R]>, ResultConstructType<R>> => {
 	return Object.entries(record).reduce(
