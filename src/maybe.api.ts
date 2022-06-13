@@ -57,6 +57,10 @@ export const fromNullable = <A>(
   return Nothing();
 };
 
+export const fromNonEmptyString = (
+  a: string
+): Maybe<string> => a.length ? Just(a) : Nothing();
+
 export const fromNumber = (a: number): Maybe<number> => {
   if (isNaN(a)) return Nothing();
   return Just(a);
@@ -105,6 +109,7 @@ export const Maybe = {
   Nothing,
   fromOptional,
   fromNullable,
+  fromNonEmptyString,
   fromNumber,
   fromFinite,
   parseInt,

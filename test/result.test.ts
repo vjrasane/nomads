@@ -1,5 +1,5 @@
 import { Maybe } from '../maybe';
-import { Result, Err, Ok } from '../result';
+import Result, { Err, Ok } from '../result';
 
 describe('Result', () => {
   it('Ok', () => {
@@ -587,6 +587,21 @@ describe('Result', () => {
         [Ok(42), Ok(true), Ok('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);
       expect([num, bool, str]).toEqual([42, true, 'str']);
+    });
+  });
+
+
+  describe('toEither', () => {
+    it('gets right from ok', () => {
+      expect(Ok(42).toEither().base).toEqual({
+        tag: 'right', value: 42
+      });
+    });
+
+    it('gets left from err', () => {
+      expect(Err('error').toEither().base).toEqual({
+        tag: 'left', value: 'error'
+      });
     });
   });
 });

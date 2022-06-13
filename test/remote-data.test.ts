@@ -1,5 +1,5 @@
 import { Maybe } from '../maybe';
-import { Failure, Loading, RemoteData, NotAsked, Success } from '../remote-data';
+import RemoteData, { Failure, Loading, NotAsked, Success } from '../remote-data';
 
 
 describe('RemoteData', () => {

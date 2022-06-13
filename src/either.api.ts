@@ -25,16 +25,16 @@ export const record = <R extends Record<string | number | symbol, Either<any, an
 	);
   };
 
-  export const all = <T extends readonly Either<any, any>[] | []>(
+export const all = <T extends readonly Either<any, any>[] | []>(
 	arr: T
-  ): Either<LeftType<T[number]>, EitherConstructType<T>> => {
+	): Either<LeftType<T[number]>, EitherConstructType<T>> => {
 	return (arr as readonly Either<any, any>[]).reduce(
-	  (acc, curr): Either<LeftType<T[number]>, EitherConstructType<T>> => acc.chain(
+		(acc, curr): Either<LeftType<T[number]>, EitherConstructType<T>> => acc.chain(
 		(a): Either<LeftType<T[number]>, EitherConstructType<T>> => curr.map(
-		  (v): EitherConstructType<T> => [...(a as unknown as any[]), v] as unknown as EitherConstructType<T>)
-	  ), Right([] as unknown as EitherConstructType<T>)
+			(v): EitherConstructType<T> => [...(a as unknown as any[]), v] as unknown as EitherConstructType<T>)
+		), Right([] as unknown as EitherConstructType<T>)
 	);
-  };
+};
   
 export const array = all;
 

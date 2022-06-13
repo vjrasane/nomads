@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { Maybe, Just, Nothing } from '../maybe';
+import Maybe, { Just, Nothing } from '../maybe';
 import './maybe.types';
 
 describe('Maybe', () => {
@@ -235,6 +235,19 @@ describe('Maybe', () => {
 
     it('gets nothing from null', () => {
       const maybe = Maybe.fromNullable(null);
+      expect(maybe.base).toEqual({ tag: 'nothing' });
+    });
+  });
+
+
+  describe('fromNonEmptyString', () => {
+    it('gets just from string', () => {
+      const maybe = Maybe.fromNonEmptyString("not empty");
+      expect(maybe.base).toEqual({ tag: 'just', value: "not empty" });
+    });
+
+    it('gets nothing from empty string', () => {
+      const maybe = Maybe.fromNonEmptyString("");
       expect(maybe.base).toEqual({ tag: 'nothing' });
     });
   });
