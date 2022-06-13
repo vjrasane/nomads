@@ -1,1 +1,2 @@
-export { Maybe, Just, Nothing } from './src/maybe';
+export * from './src/maybe.api';
+export { Maybe as default } from './src/maybe.api';

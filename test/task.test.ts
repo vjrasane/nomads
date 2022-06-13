@@ -17,7 +17,7 @@ describe('Task', () => {
     it('identity', async () => {
       const left = await Task.resolve(42).map((v) => v).fork();
       const right = await Task.resolve(42).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
 
     it('composition', async () => {
@@ -25,7 +25,7 @@ describe('Task', () => {
       const g = (v: number) => v + 2;
       const left = await Task.resolve(42).map(f).map(g).fork();
       const right = await Task.resolve(42).map(v => g(f(v))).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
   });
 
@@ -33,21 +33,21 @@ describe('Task', () => {
     it('identity', async () => {
       const left = await Task.resolve((v: number) => v).apply(Task.resolve(42)).fork();
       const right = await Task.resolve(42).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
 
     it('homomorphism', async () => {
       const f = (v: number) => v * 2;
       const left = await Task.resolve(f).apply(Task.resolve(42)).fork();
       const right = await Task.resolve(f(42)).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
 
     it('interchange', async () => {
       const f = (v: number) => v * 2;
       const left = await Task.resolve(f).apply(Task.resolve(42)).fork();
       const right = await Task.resolve((g: typeof f) => g(42)).apply(Task.resolve(f)).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
 
     it('composition', async () => {
@@ -64,7 +64,7 @@ describe('Task', () => {
         .apply(w)
         .fork();
       const right = await u.apply(v.apply(w)).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
   });
 
@@ -74,14 +74,14 @@ describe('Task', () => {
       const f = (n: number) => Task.resolve(n * 2);
       const left = await ret(42).chain(f).fork();
       const right = await f(42).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
 
     it('right identity',async () => {
       const ret = <A>(n: A) => Task.resolve(n);
       const left = await Task.resolve(42).chain(ret).fork();
       const right = await Task.resolve(42).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
 
     it('associativity', async() => {
@@ -90,7 +90,7 @@ describe('Task', () => {
       const g = (n: number) => Task.resolve(n * 2);
       const left = await m.chain(f).chain(g).fork();
       const right = await  m.chain((v) => f(v).chain(g)).fork();
-      expect(left.value).toEqual(right.value);
+      expect(left.get()).toEqual(right.get());
     });
   });
 
@@ -123,7 +123,7 @@ describe('Task', () => {
       expect(rejector).not.toHaveBeenCalled();
       jest.runAllTimers();
       const result = await process;
-      expect(result.error).toBe('error');
+      expect(result.getError().get()).toBe('error');
       expect(rejector).toHaveBeenCalledTimes(1);
     });
   });
@@ -134,14 +134,14 @@ describe('Task', () => {
       Task.resolve(42)
         .map((n) => n * 2)
         .fork();
-      expect(result.value).toBe(84);
+      expect(result.get()).toBe(84);
     });
 
     it('maps rejecting promise', async () => {
       const result = await Task.reject('error')
         .map((n) => n * 2)
         .fork();
-      expect(result.error).toBe('error');
+      expect(result.getError().get()).toBe('error');
     });
   });
 
@@ -150,40 +150,40 @@ describe('Task', () => {
       const result = await Task.resolve(42)
         .chain((n) => Task.resolve(n * 2))
         .fork();
-      expect(result.value).toBe(84);
+      expect(result.get()).toBe(84);
     });
 
     it('chains rejecting promise with resolving promise', async () => {
       const result = await Task.reject('first')
         .chain((n) => Task.resolve(n * 2))
         .fork();
-      expect(result.error).toBe('first');
+      expect(result.getError().get()).toBe('first');
     });
 
     it('chains rejecting promise with rejecting promise', async () => {
       const result = await Task.reject('first')
         .chain(() => Task.reject('second'))
         .fork();
-      expect(result.error).toBe('first');
+      expect(result.getError().get()).toBe('first');
     });
 
     it('chains resolving promise with rejecting promise', async () => {
       const result = await Task.resolve(42)
         .chain(() => Task.reject('second'))
         .fork();
-      expect(result.error).toBe('second');
+      expect(result.getError().get()).toBe('second');
     });
   });
 
   describe('encase', () => {
     it('encases resolving promise', async () => {
       const result = await Task.resolve(42).fork();
-      expect(result.result).toEqual({ tag: 'ok', value: 42 });
+      expect(result.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('encases rejecting promise', async () => {
       const result = await Task.reject('error').fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'error' });
+      expect(result.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('encases mapped resolving promise', async () => {
@@ -191,7 +191,7 @@ describe('Task', () => {
         .map((n) => n * 2)
         
         .fork();
-      expect(result.result).toEqual({ tag: 'ok', value: 84 });
+      expect(result.base).toEqual({ tag: 'ok', value: 84 });
     });
 
     it('encases mapped rejecting promise', async () => {
@@ -199,7 +199,7 @@ describe('Task', () => {
         .map((n) => n * 2)
         
         .fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'error' });
+      expect(result.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('encases chained resolving promise', async () => {
@@ -207,7 +207,7 @@ describe('Task', () => {
         .chain((n) => Task.resolve(n * 2))
         
         .fork();
-      expect(result.result).toEqual({ tag: 'ok', value: 84 });
+      expect(result.base).toEqual({ tag: 'ok', value: 84 });
     });
 
     it('encases chained rejecting promise with resolving promise', async () => {
@@ -215,7 +215,7 @@ describe('Task', () => {
         .chain((n) => Task.resolve(n * 2))
         
         .fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'first' });
+      expect(result.base).toEqual({ tag: 'err', error: 'first' });
     });
 
     it('encases chained rejecting promise with rejecting promise', async () => {
@@ -223,7 +223,7 @@ describe('Task', () => {
         .chain(() => Task.reject('second'))
         
         .fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'first' });
+      expect(result.base).toEqual({ tag: 'err', error: 'first' });
     });
 
     it('encases chained resolving promise with rejecting promise', async () => {
@@ -231,7 +231,7 @@ describe('Task', () => {
         .chain(() => Task.reject('second'))
         
         .fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'second' });
+      expect(result.base).toEqual({ tag: 'err', error: 'second' });
     });
 
     it('maps encased resolving task', async () => {
@@ -239,7 +239,7 @@ describe('Task', () => {
         
         .map(n => n * 2)
         .fork();
-      expect(result.result).toEqual({ tag: 'ok', value: 84 });
+      expect(result.base).toEqual({ tag: 'ok', value: 84 });
     });
 
     it('maps encased rejecting task', async () => {
@@ -247,7 +247,7 @@ describe('Task', () => {
         
         .map((n: number) => n * 2)
         .fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'error' });
+      expect(result.base).toEqual({ tag: 'err', error: 'error' });
     });
 
     it('maps error of encased rejecting task', async () => {
@@ -255,14 +255,14 @@ describe('Task', () => {
         
         .mapError((str) => str.toUpperCase())
         .fork();
-      expect(result.result).toEqual({ tag: 'err', error: 'ERROR' });
+      expect(result.base).toEqual({ tag: 'err', error: 'ERROR' });
     });
 
     it('maps error of encased resolving task', async () => {
       const result = await Task.resolve(42)
         .mapError(str => str.toUpperCase())
         .fork();
-      expect(result.result).toEqual({ tag: 'ok', value: 42 });
+      expect(result.base).toEqual({ tag: 'ok', value: 42 });
     });
 
     it('folds encased resolving task', async () => {
@@ -285,18 +285,18 @@ describe('Task', () => {
 
   describe('unwrap', () => {
     it('unwraps resolving promise', async () => {
-      const result = await Task.resolve(42).task();
-      expect(result.value).toBe(42);
+      const result = await Task.resolve(42).fork();
+      expect(result.get()).toBe(42);
     });
 
     it('unwraps rejecting promise', async () => {
-      const result = await Task.reject('error').task();
-      expect(result.error).toBe('error');
+      const result = await Task.reject('error').fork();
+      expect(result.getError().get()).toBe('error');
     });
 
     it('unwraps mapped resolving promise', async () => {
-      const result = await Task.resolve(42).map((n) => n * 2).task();
-      expect(result.value).toBe(84);
+      const result = await Task.resolve(42).map((n) => n * 2).fork();
+      expect(result.get()).toBe(84);
     });
   });
 
@@ -308,7 +308,7 @@ describe('Task', () => {
         third: Task.resolve(3),
       });
       const result = await task.fork();
-      expect(result.value).toEqual({
+      expect(result.get()).toEqual({
         first: 1, second: 2, third: 3
       });
     });
@@ -320,7 +320,7 @@ describe('Task', () => {
         third: Task.resolve(3),
       });
       const result = await task.fork();
-      expect(result.error).toBe('error');
+      expect(result.getError().get()).toBe('error');
     });
 
     it('rejects with the error from first rejecting task', async () => {
@@ -330,7 +330,7 @@ describe('Task', () => {
         third: Task.resolve('third'),
       });
       const result = await task.fork();
-      expect(result.error).toBe('first');
+      expect(result.getError().get()).toBe('first');
     });
 
     it ('test typings', async () => {
@@ -352,7 +352,7 @@ describe('Task', () => {
         Task.resolve(3)
       ]);
       const result = await task.fork();
-      expect(result.value).toEqual(
+      expect(result.get()).toEqual(
         [1 ,2 ,3]
       );
     });
@@ -364,7 +364,7 @@ describe('Task', () => {
         Task.resolve(3)
       ]);
       const result = await task.fork();
-      expect(result.error).toEqual(
+      expect(result.getError().get()).toEqual(
         'error'
       );
     });
@@ -376,7 +376,7 @@ describe('Task', () => {
         Task.reject('third')
       ]);
       const result = await task.fork();
-      expect(result.error).toEqual(
+      expect(result.getError().get()).toEqual(
         'first'
       );
     });
@@ -397,21 +397,21 @@ describe('Task', () => {
       const result = await Task.resolve(Task.resolve(42))
         .join()
         .fork();
-      expect(result.value).toBe(42);
+      expect(result.get()).toBe(42);
     });
 
     it('joins resolving task with rejecting task', async () => {
       const result = await Task.resolve(Task.reject('error'))
         .join()
         .fork();
-      expect(result.error).toBe('error');
+      expect(result.getError().get()).toBe('error');
     });
 
     it('joins rejecting task', async () => {
       const result = await Task.reject('error')
         .join()
         .fork();
-      expect(result.error).toBe('error');
+      expect(result.getError().get()).toBe('error');
     });
 
     it('cannot join single resolving task', async () => {
@@ -419,43 +419,43 @@ describe('Task', () => {
         .join()
         /* @ts-expect-error testing */
         .fork();
-      expect(result.value).toBe(42);
+      expect(result.get()).toBe(42);
     });
 
     it('works with chain', async () => {
       const result = await Task.resolve(Task.resolve(42)).chain(t => t).fork();
-      expect(result.value).toBe(42);
+      expect(result.get()).toBe(42);
     });
   });
 
   describe('apply', () => {
     it('function applies to resolving task', async () => {
       const result = await Task.resolve((str: string) => parseInt(str, 10)).apply(Task.resolve('42')).fork();
-      expect(result.value).toEqual(42);
+      expect(result.get()).toEqual(42);
     });
 
     it('function applies to rejecting task', async () => {
       const result = await Task.resolve((str: string) => parseInt(str, 10)).apply(Task.reject('error')).fork();
-      expect(result.error).toEqual('error');
+      expect(result.getError().get()).toEqual('error');
     });
 
     it ('cannot apply task not containing a function', async () => {
       const result = await Task.resolve(0)
         /* @ts-expect-error testing */
         .apply(Task.resolve(42)).fork();
-      expect(result.value).toEqual(42);
+      expect(result.get()).toEqual(42);
     });
 
     it('cannot apply rejecting task to resolving task', async () => {
       const result = await Task.reject('error')
         /* @ts-expect-error testing */
         .apply(Task.resolve('42')).fork();
-      expect(result.error).toEqual('error');
+      expect(result.getError().get()).toEqual('error');
     });
 
     it('rejecting task applies to rejecting task', async () => {
       const result = await Task.reject('first').apply(Task.reject('second')).fork();
-      expect(result.error).toEqual('first');
+      expect(result.getError().get()).toEqual('first');
     });
 
     it('applies a curried function multiple times to resolving values', async () => {
@@ -464,7 +464,7 @@ describe('Task', () => {
         .apply(Task.resolve(2))
         .apply(Task.resolve(3))
         .fork();
-      expect(applied.value).toEqual(7);
+      expect(applied.get()).toEqual(7);
     });
 
     it('applies a curried function multiple times to resolving and rejecting values', async () => {
@@ -473,7 +473,7 @@ describe('Task', () => {
         .apply(Task.reject('error'))
         .apply(Task.resolve(3))
         .fork();
-      expect(applied.error).toEqual('error');
+      expect(applied.getError().get()).toEqual('error');
     });
 
     it('autocurries function', async () => {
@@ -482,19 +482,19 @@ describe('Task', () => {
         .apply(Task.resolve(2))
         .apply(Task.resolve(3))
         .fork();
-      expect(applied.value).toEqual(7);
+      expect(applied.get()).toEqual(7);
     });
   });
 
   describe('applyAll', () => {
     it ('applies function to array of resolving tasks', async () => {
       const result = await Task.applyAll((a, b) => a + b, [Task.resolve(42), Task.resolve(69)]).fork();
-      expect(result.value).toEqual(111);
+      expect(result.get()).toEqual(111);
     });
 
     it ('applies function to array with one rejecting task', async () => {
       const result = await Task.applyAll((a, b) => a + b, [Task.resolve(42), Task.reject('error')]).fork();
-      expect(result.error).toEqual('error');
+      expect(result.getError().get()).toEqual('error');
     });
 
     it ('test typings', async () => {
@@ -519,14 +519,14 @@ describe('Task', () => {
       const promise = Task.sleep(1000).map(() => 42).fork();
       jest.advanceTimersByTime(1000);
       const result = await promise;
-      expect(result.value).toBe(42);
+      expect(result.get()).toBe(42);
     });
 
     it('chain to reject with error', async () => {
       const promise = Task.sleep(1000).chain(() => Task.reject('error')).fork();
       jest.advanceTimersByTime(1000);
       const result = await promise;
-      expect(result.error).toBe('error');
+      expect(result.getError().get()).toBe('error');
     });
   });
 });

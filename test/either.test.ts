@@ -3,7 +3,7 @@ import { Left, Right } from '../either';
 describe('Either', () => {
   it('Left', () => {
     const left = Left(42);
-    expect(left.either).toEqual({ tag: 'left', value: 42 });
+    expect(left.base).toEqual({ tag: 'left', value: 42 });
     expect(left.tag).toEqual('left');
     expect(left.get()).toEqual(undefined);
     expect(left.value).toEqual(42);
@@ -13,7 +13,7 @@ describe('Either', () => {
 
   it('Right', () => {
     const right = Right(42);
-    expect(right.either).toEqual({ tag: 'right', value: 42 });
+    expect(right.base).toEqual({ tag: 'right', value: 42 });
     expect(right.tag).toEqual('right');
     expect(right.get()).toEqual(42);
     expect(right.value).toEqual(42);
@@ -23,21 +23,21 @@ describe('Either', () => {
 
   describe('mapLeft', () => {
     it('maps left', () => {
-      expect(Left(42).mapLeft(n => n * 2).either).toEqual({ tag: 'left', value: 84 });
+      expect(Left(42).mapLeft(n => n * 2).base).toEqual({ tag: 'left', value: 84 });
     });
 
     it('maps right', () => {
-      expect(Right(42).mapLeft(n => n * 2).either).toEqual({ tag: 'right', value: 42 });
+      expect(Right(42).mapLeft(n => n * 2).base).toEqual({ tag: 'right', value: 42 });
     });
   });
 
   describe('mapRight', () => {
     it('maps left', () => {
-      expect(Left(42).map(n => n * 2).either).toEqual({ tag: 'left', value: 42 });
+      expect(Left(42).map(n => n * 2).base).toEqual({ tag: 'left', value: 42 });
     });
 
     it('maps right', () => {
-      expect(Right(42).map(n => n * 2).either).toEqual({ tag: 'right', value: 84 });
+      expect(Right(42).map(n => n * 2).base).toEqual({ tag: 'right', value: 84 });
     });
   });
 
@@ -46,14 +46,14 @@ describe('Either', () => {
       expect(Left(42)
         .mapLeft(n => n * 2)
         .map(() => 69)
-        .either).toEqual({tag: 'left', value: 84});
+        .base).toEqual({tag: 'left', value: 84});
     });
 
     it('maps right', () => {
       expect(Right(42)
         .mapLeft(() => 69)
         .map(n => n * 2)
-        .either).toEqual({tag: 'right', value: 84});
+        .base).toEqual({tag: 'right', value: 84});
     });
   });
 
@@ -75,13 +75,13 @@ describe('Either', () => {
 
   describe('toResult', () => {
     it('gets ok from right', () => {
-      expect(Right(42).toResult().result).toEqual({
+      expect(Right(42).toResult().base).toEqual({
         tag: 'ok', value: 42
       });
     });
 
     it('gets err from left', () => {
-      expect(Left('error').toResult().result).toEqual({
+      expect(Left('error').toResult().base).toEqual({
         tag: 'err', error: 'error'
       });
     });
@@ -103,13 +103,13 @@ describe('Either', () => {
 
   describe('swap', () => {
     it('swaps left', () => {
-      expect(Left(42).swap().either).toEqual({
+      expect(Left(42).swap().base).toEqual({
         tag: 'right', value: 42
       });
     });
 
     it('swaps right', () => {
-      expect(Right(42).swap().either).toEqual({
+      expect(Right(42).swap().base).toEqual({
         tag: 'left', value: 42
       });
     });
@@ -128,28 +128,28 @@ describe('Either', () => {
   describe('join', () => {
     it('joins two right values', () => {
       const joined = Right(Right(42)).join();
-      expect(joined.either).toEqual({ tag: 'right', value: 42 });
+      expect(joined.base).toEqual({ tag: 'right', value: 42 });
     });
 
     it('joins nested left value', () => {
       const joined = Right(Left(42)).join();
-      expect(joined.either).toEqual({ tag: 'left', value: 42 });
+      expect(joined.base).toEqual({ tag: 'left', value: 42 });
     });
 
     it('joins left value', () => {
       const joined = Left(42).join();
-      expect(joined.either).toEqual({ tag: 'left', value: 42 });
+      expect(joined.base).toEqual({ tag: 'left', value: 42 });
     });
 
     it('joins nested right value', () => {
       const joined = Left(Right(42)).join();
-      expect(joined.left?.either).toEqual({ tag: 'right', value: 42 });
+      expect(joined.getLeft().get()?.base).toEqual({ tag: 'right', value: 42 });
     });
     
     it('cannot join single right value', () => {
       const joined = Right(42).join();
       /* @ts-expect-error testing */
-      expect(joined.either).toEqual({ tag: 'right', value: 42 });
+      expect(joined.base).toEqual({ tag: 'right', value: 42 });
     });
   });
 });

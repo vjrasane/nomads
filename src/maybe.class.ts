@@ -1,6 +1,13 @@
 import { Err, Ok, Result } from '../result';
 import { curry, FunctionInputType, FunctionOutputType } from './function';
-import { Maybe } from './maybe';
+import { Maybe } from './maybe.api';
+
+export type MaybeType<M> = M extends Maybe<infer T>
+  ? T : never;
+
+export type MaybeConstructType<
+  A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>
+> = { -readonly [P in keyof A]: MaybeType<A[P]> };
 
 type Fold<A, B> = {
   just: (a: A) => B;
@@ -43,14 +50,9 @@ abstract class AMaybe<A> implements IMaybe<A> {
   default = (a: A) => this.self.tag === "just" ? this.self : new Just(a);
   or = (other: Maybe<A>) => this.self.tag === "just" ? this.self : other;
   orElse = (other: Maybe<A>) => other.or(this.self);
-  filter = (f: (a: A) => boolean): Maybe<A> => {
-    switch(this.self.tag) {
-      case "just":
-        return f(this.self.value) ? this.self : new Nothing();
-      default:
-        return this.self;
-    } 
-  }
+  filter = (f: (a: A) => boolean): Maybe<A> => this.chain(
+    (a: A) => f(a) ? this.self : new Nothing()
+  )
   fold = <B>(f: Fold<A, B>) => this.self.tag === "just" ? f.just(this.self.value) : f.nothing();
   map = <B>(fab: (a: A) => B): Maybe<B> => this.self.tag === "just" 
     ? new Just(fab(this.self.value)) 

@@ -1,24 +1,16 @@
+import * as Class from "./result.class";
 import { NonEmptyArray } from "./optional";
-import * as Classes from "./result.classes";
+import { ErrorType, ResultConstructType, ResultType } from "./result.class";
 
 export type Fold<E, A, B> = {
 	ok: (a: A) => B,
 	err: (e: E) => B
 }
 
-export type Result<E, A> = Classes.Ok<E, A> | Classes.Err<E, A>;
+export type Result<E, A> = Class.Ok<E, A> | Class.Err<E, A>;
 
-export const Ok = <A, E = any>(value: A): Result<E, A> => new Classes.Ok(value);
-export const Err = <E, A = any>(error: E): Result<E, A> => new Classes.Err(error);
-
-type ResultType<R> = R extends Result<any, infer T>
-  ? T : never;
-
-type ErrorType<R> = R extends Result<infer T, any> ? T : never;
-
-type ResultConstructType<
-  A extends readonly Result<unknown, unknown>[] | Record<string | symbol | number, Result<unknown, unknown>>
-> = { -readonly [P in keyof A]: ResultType<A[P]> };
+export const Ok = <A, E = any>(value: A): Result<E, A> => new Class.Ok(value);
+export const Err = <E, A = any>(error: E): Result<E, A> => new Class.Err(error);
 
 export const record = <R extends Record<string, Result<any, any>>>(
 	record: R

@@ -1,1 +1,2 @@
-export { Result, Ok, Err } from './src/result';
+export * from './src/result.api';
+export { Result as default } from './src/result.api';

@@ -6,7 +6,7 @@
   "repository": "https://github.com/vjrasane/nomads.git",
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
-    "prepack": "yarn build",
+    "prepack": "npm run build",
     "clean": "ts-node bin/cleanup.ts",
     "postpack": "npm run clean",
     "build": "tsc --project tsconfig.prod.json",

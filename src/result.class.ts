@@ -1,7 +1,16 @@
-import { Either } from "../either";
+import { Either, Left, Right } from "../either";
 import { Just, Maybe, Nothing } from "../maybe";
 import { curry, FunctionInputType, FunctionOutputType } from "./function";
-import { Fold, Result } from "./result";
+import { Fold, Result } from "./result.api";
+
+export type ResultType<R> = R extends Result<any, infer T>
+  ? T : never;
+
+export type ErrorType<R> = R extends Result<infer T, any> ? T : never;
+
+export type ResultConstructType<
+  A extends readonly Result<unknown, unknown>[] | Record<string | symbol | number, Result<unknown, unknown>>
+> = { -readonly [P in keyof A]: ResultType<A[P]> };
 
 
 interface IResult<E, A> {
@@ -16,6 +25,7 @@ interface IResult<E, A> {
 	orElse: (ra: Result<E, A>) => Result<E, A>,
 	default: (a: A) => Result<E, A>,
 	toMaybe: () => Maybe<A>,
+	toEither: () => Either<E, A>,
 	get: () => A | undefined,
 	getOrElse: (def: A) => A,
 	getValue: () => Maybe<A>,
@@ -38,7 +48,7 @@ abstract class AResult<E, A> implements IResult<E, A> {
 
 	get = () => this.toMaybe().get();
 	getOrElse = (def: A) => this.toMaybe().getOrElse(def);
-	default = (def: A) => this.self.tag === "ok" ? this.self : new Ok(def);
+	default = (def: A) => this.self.tag === "ok" ? this.self : new Ok<E, A>(def);
 	or = (other: Result<E, A>) => {
 		switch(this.self.tag) {
 			case "ok":
@@ -49,11 +59,11 @@ abstract class AResult<E, A> implements IResult<E, A> {
 	}
 	orElse = (other: Result<E, A>) => other.or(this.self);
 	map = <B>(fab: (a: A) => B): Result<E, B> => this.self.tag === "ok" 
-    ? new Ok(fab(this.self.value)) 
-    : new Err(this.self.error)
+    ? new Ok<E, B>(fab(this.self.value)) 
+    : new Err<E, B>(this.self.error)
 	mapError = <F>(fef: (e: E) => F): Result<F, A> => this.self.tag === "ok" 
-    ? new Ok(this.self.value) 
-    : new Err(fef(this.self.error))
+    ? new Ok<F, A>(this.self.value) 
+    : new Err<F, A>(fef(this.self.error))
 
 	chain = <B>(fab: (a: A) => Result<E, B>): Result<E, B> => this.self.tag === "ok"
 		? fab(this.self.value) : new Err(this.self.error);
@@ -69,6 +79,7 @@ abstract class AResult<E, A> implements IResult<E, A> {
 		) as A extends Result<E, infer T> ? Result<E, T> : never;
 	fold = <B>(f: Fold<E, A, B>) => this.self.tag === "ok" ? f.ok(this.self.value) : f.err(this.self.error);
 	toMaybe = () => this.getValue();
+	toEither = () => this.self.tag === "ok" ? Right(this.self.value) : Left(this.self.error)
 	getValue = () => this.self.tag === "ok" ? Just(this.self.value) : Nothing<A>();
 	getError = () => this.self.tag === "ok" ? Nothing<E>() : Just(this.self.error);
 	toString = () => {

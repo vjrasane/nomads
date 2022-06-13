@@ -1,21 +1,10 @@
-import { Err, Ok, Result } from '../result';
-import { curry, FunctionInputType, FunctionOutputType } from './function';
-import { Optional } from './optional';
-import { isType } from './type';
-import * as Classes from "./maybe.classes";
+import * as Class from "./maybe.class";
+import { MaybeConstructType, MaybeType } from "./maybe.class";
 
+export type Maybe<A> = Class.Just<A> | Class.Nothing<A>;
 
-export type Maybe<A> = Classes.Just<A> | Classes.Nothing<A>;
-
-export const Just = <A>(value: A): Maybe<A> => new Classes.Just(value);
-export const Nothing = <A = any>(): Maybe<A> => new Classes.Nothing<A>();
-
-export type MaybeType<M> = M extends Maybe<infer T>
-  ? T : never;
-
-export type MaybeConstructType<
-  A extends readonly Maybe<any>[] | Record<string | symbol | number, Maybe<any>>
-> = { -readonly [P in keyof A]: MaybeType<A[P]> };
+export const Just = <A>(value: A): Maybe<A> => new Class.Just(value);
+export const Nothing = <A = any>(): Maybe<A> => new Class.Nothing<A>();
 
 export const record = <R extends Record<string, Maybe<any>>>(
   record: R
@@ -55,7 +44,6 @@ F extends (...args: P) => any
     (a): ReturnType<F> => f(...(a as Parameters<F>))
   );
 };
-
 
 export const fromOptional = <A>(a: A | undefined): Maybe<A> => {
   if (a !== undefined) return Just(a);
@@ -132,14 +120,3 @@ export const Maybe = {
   array,
   applyAll,
 } as const;
-
-
-
-// m.map((n) => n * 2).map(())
-
-// constm.apply(Just.of(42));
-
-
-
-// type TT = MaybeType<typeof v>
-
