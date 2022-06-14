@@ -3,8 +3,8 @@ import { NonEmptyArray } from './utils';
 import { ErrorType, ResultConstructType, ResultType } from './result.class';
 
 export type Fold<E, A, B> = {
-	ok: (a: A) => B,
-	err: (e: E) => B
+ok: (a: A) => B,
+err: (e: E) => B
 }
 
 export type Result<E, A> = Class.Ok<E, A> | Class.Err<E, A>;
@@ -16,12 +16,12 @@ export const record = <R extends Record<string | number | symbol, Result<any, an
   record: R
 ): Result<ErrorType<R[keyof R]>, ResultConstructType<R>> => {
   return Object.entries(record).reduce(
-	  (acc, [key, value]): Result<ErrorType<R[keyof R]>, ResultConstructType<R>> => {
+    (acc, [key, value]): Result<ErrorType<R[keyof R]>, ResultConstructType<R>> => {
       return acc.chain(
-		  (a): Result<ErrorType<R[keyof R]>, ResultConstructType<R>> => value.map(
+        (a): Result<ErrorType<R[keyof R]>, ResultConstructType<R>> => value.map(
           (v): ResultConstructType<R> => ({ ...a, [key]: v }))
       );
-	  }, Ok({} as ResultConstructType<R>)
+    }, Ok({} as ResultConstructType<R>)
   );
 };
 
@@ -29,13 +29,13 @@ export const all = <T extends readonly Result<any, any>[] | []>(
   arr: T
 ): Result<ErrorType<T[number]>, ResultConstructType<T>> => {
   return (arr as readonly Result<any, any>[]).reduce(
-	  (acc, curr): Result<ErrorType<T[number]>, ResultConstructType<T>> => acc.chain(
+    (acc, curr): Result<ErrorType<T[number]>, ResultConstructType<T>> => acc.chain(
       (a): Result<ErrorType<T[number]>, ResultConstructType<T>> => curr.map(
-		  (v): ResultConstructType<T> => [...(a as unknown as any[]), v] as unknown as ResultConstructType<T>)
-	  ), Ok([] as unknown as ResultConstructType<T>)
+        (v): ResultConstructType<T> => [...(a as unknown as any[]), v] as unknown as ResultConstructType<T>)
+    ), Ok([] as unknown as ResultConstructType<T>)
   );
 };
-  
+
 export const array = all;
 
 export const applyAll = <
@@ -75,4 +75,3 @@ export const Result = {
   record,
   values
 } as const;
-  

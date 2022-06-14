@@ -82,8 +82,6 @@ toString = () => {
 };
 }
 
-
-
 export class Just<A> extends AMaybe<A> {
   readonly tag = 'just';
   constructor(readonly value: A) { super(); }

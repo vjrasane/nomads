@@ -33,8 +33,6 @@
     "*.js",
     "*.d.ts",
     "src/**/*.d.ts",
-    "src/**/*.js",
-    "docs/**/*.md",
-    "README.md"
+    "src/**/*.js"
   ]
 }

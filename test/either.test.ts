@@ -254,7 +254,7 @@ describe('Either', () => {
       const joined = Left(Right(42)).join();
       expect(joined.getLeft().get()?.base).toEqual({ tag: 'right', value: 42 });
     });
-    
+
     it('cannot join single right value', () => {
       const joined = Right(42).join();
       /* @ts-expect-error testing */
@@ -276,7 +276,7 @@ describe('Either', () => {
 
     it ('test typings', () => {
       const applied = Either.applyAll(
-        (a: number, b: boolean, c: string) => [a,b,c] as const, 
+        (a: number, b: boolean, c: string) => [a,b,c] as const,
         [Right(42), Right(true), Right('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);
       expect([num, bool, str]).toEqual([42, true, 'str']);
