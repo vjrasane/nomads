@@ -583,7 +583,7 @@ describe('Result', () => {
 
     it ('test typings', () => {
       const applied = Result.applyAll(
-        (a: number, b: boolean, c: string) => [a,b,c] as const, 
+        (a: number, b: boolean, c: string) => [a,b,c] as const,
         [Ok(42), Ok(true), Ok('str')]);
       const [num, bool, str] = applied.getOrElse([0, false, '']);
       expect([num, bool, str]).toEqual([42, true, 'str']);
