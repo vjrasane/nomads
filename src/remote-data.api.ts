@@ -1,14 +1,14 @@
-import * as Class from "./remote-data.class";
-import { ErrorType, RemoteDataConstructType, RemoteDataType } from "./remote-data.class";
-import { NonEmptyArray } from "./utils";
-import Result from "../result";
+import * as Class from './remote-data.class';
+import { ErrorType, RemoteDataConstructType, RemoteDataType } from './remote-data.class';
+import { NonEmptyArray } from './utils';
+import Result from '../result';
 
 export type Fold<E, A, B> = {
-	success: (a: A) => B,
-	failure: (e: E) => B,
-	loading: () => B
-} & 
-({ 'not asked': () => B } 
+success: (a: A) => B,
+failure: (e: E) => B,
+loading: () => B
+} &
+({ 'not asked': () => B }
 | { notAsked: () => B })
 
 export type RemoteData<E, A> = Class.NotAsked<E, A> | Class.Loading<E, A> | Class.Success<E, A> | Class.Failure<E, A>;
@@ -19,29 +19,29 @@ export const Loading = <E = any, A = any>(): RemoteData<E, A> => new Class.Loadi
 export const NotAsked = <E = any, A = any>(): RemoteData<E, A> => new Class.NotAsked();
 
 export const record = <R extends Record<string | number | symbol, RemoteData<any, any>>>(
-	record: R
-  ): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => {
-	return Object.entries(record).reduce(
-	  (acc, [key, value]): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => {
-		return acc.chain(
-		  (a): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => value.map(
-			(v): RemoteDataConstructType<R> => ({ ...a, [key]: v }))
-		);
-	  }, Success({} as RemoteDataConstructType<R>)
-	);
-  };
+  record: R
+): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => {
+  return Object.entries(record).reduce(
+    (acc, [key, value]): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => {
+      return acc.chain(
+        (a): RemoteData<ErrorType<R[keyof R]>, RemoteDataConstructType<R>> => value.map(
+          (v): RemoteDataConstructType<R> => ({ ...a, [key]: v }))
+      );
+    }, Success({} as RemoteDataConstructType<R>)
+  );
+};
 
-  export const all = <T extends readonly RemoteData<any, any>[] | []>(
-	arr: T
-  ): RemoteData<ErrorType<T[number]>, RemoteDataConstructType<T>> => {
-	return (arr as readonly RemoteData<any, any>[]).reduce(
-	  (acc, curr): RemoteData<ErrorType<T[number]>, RemoteDataConstructType<T>> => acc.chain(
-		(a): RemoteData<ErrorType<T[number]>, RemoteDataConstructType<T>> => curr.map(
-		  (v): RemoteDataConstructType<T> => [...(a as unknown as any[]), v] as unknown as RemoteDataConstructType<T>)
-	  ), Success([] as unknown as RemoteDataConstructType<T>)
-	);
-  };
-  
+export const all = <T extends readonly RemoteData<any, any>[] | []>(
+  arr: T
+): RemoteData<ErrorType<T[number]>, RemoteDataConstructType<T>> => {
+  return (arr as readonly RemoteData<any, any>[]).reduce(
+    (acc, curr): RemoteData<ErrorType<T[number]>, RemoteDataConstructType<T>> => acc.chain(
+      (a): RemoteData<ErrorType<T[number]>, RemoteDataConstructType<T>> => curr.map(
+        (v): RemoteDataConstructType<T> => [...(a as unknown as any[]), v] as unknown as RemoteDataConstructType<T>)
+    ), Success([] as unknown as RemoteDataConstructType<T>)
+  );
+};
+
 export const array = all;
 
 export const applyAll = <
@@ -58,7 +58,7 @@ F extends (...args: P) => any
 };
 
 export const some = <A extends NonEmptyArray<RemoteData<ErrorType<A[number]>, RemoteDataType<A[number]>>>> (arr: A): A[number] =>
-	arr.reduce((acc, curr) => acc.or(curr));
+  arr.reduce((acc, curr) => acc.or(curr));
 
 export const values = <A extends Array<RemoteData<any, any>>>(arr: A): Array<RemoteDataType<A[number]>> => {
   return arr.reduce(
@@ -79,16 +79,15 @@ export const fromResult = <E, A>(r: Result<E, A>): RemoteData<E, A> => r.fold({
 });
 
 export const RemoteData = {
-	Success,
-	Failure,
-	Loading,
-	NotAsked,
-	applyAll,
-	all,
-	some,
-	array,
-	record,
-	values,
-	fromResult
-  } as const;
-  
+  Success,
+  Failure,
+  Loading,
+  NotAsked,
+  applyAll,
+  all,
+  some,
+  array,
+  record,
+  values,
+  fromResult
+} as const;

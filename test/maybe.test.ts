@@ -242,12 +242,12 @@ describe('Maybe', () => {
 
   describe('fromNonEmptyString', () => {
     it('gets just from string', () => {
-      const maybe = Maybe.fromNonEmptyString("not empty");
-      expect(maybe.base).toEqual({ tag: 'just', value: "not empty" });
+      const maybe = Maybe.fromNonEmptyString('not empty');
+      expect(maybe.base).toEqual({ tag: 'just', value: 'not empty' });
     });
 
     it('gets nothing from empty string', () => {
-      const maybe = Maybe.fromNonEmptyString("");
+      const maybe = Maybe.fromNonEmptyString('');
       expect(maybe.base).toEqual({ tag: 'nothing' });
     });
   });

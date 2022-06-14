@@ -1,10 +1,10 @@
-import * as Class from "./either.class";
-import { NonEmptyArray } from "./utils";
-import { LeftType, EitherConstructType, EitherType } from "./either.class";
+import * as Class from './either.class';
+import { NonEmptyArray } from './utils';
+import { LeftType, EitherConstructType, EitherType } from './either.class';
 
 export type Fold<E, A, B> = {
-	right: (a: A) => B,
-	left: (e: E) => B
+right: (a: A) => B,
+left: (e: E) => B
 }
 
 export type Either<E, A> = Class.Right<E, A> | Class.Left<E, A>;
@@ -13,29 +13,29 @@ export const Right = <A, E = any>(value: A): Either<E, A> => new Class.Right(val
 export const Left = <E, A = any>(value: E): Either<E, A> => new Class.Left(value);
 
 export const record = <R extends Record<string | number | symbol, Either<any, any>>>(
-	record: R
-  ): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => {
-	return Object.entries(record).reduce(
-	  (acc, [key, value]): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => {
-		return acc.chain(
-		  (a): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => value.map(
-			(v): EitherConstructType<R> => ({ ...a, [key]: v }))
-		);
-	  }, Right({} as EitherConstructType<R>)
-	);
-  };
+  record: R
+): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => {
+  return Object.entries(record).reduce(
+    (acc, [key, value]): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => {
+      return acc.chain(
+        (a): Either<LeftType<R[keyof R]>, EitherConstructType<R>> => value.map(
+          (v): EitherConstructType<R> => ({ ...a, [key]: v }))
+      );
+    }, Right({} as EitherConstructType<R>)
+  );
+};
 
 export const all = <T extends readonly Either<any, any>[] | []>(
-	arr: T
-	): Either<LeftType<T[number]>, EitherConstructType<T>> => {
-	return (arr as readonly Either<any, any>[]).reduce(
-		(acc, curr): Either<LeftType<T[number]>, EitherConstructType<T>> => acc.chain(
-		(a): Either<LeftType<T[number]>, EitherConstructType<T>> => curr.map(
-			(v): EitherConstructType<T> => [...(a as unknown as any[]), v] as unknown as EitherConstructType<T>)
-		), Right([] as unknown as EitherConstructType<T>)
-	);
+  arr: T
+): Either<LeftType<T[number]>, EitherConstructType<T>> => {
+  return (arr as readonly Either<any, any>[]).reduce(
+    (acc, curr): Either<LeftType<T[number]>, EitherConstructType<T>> => acc.chain(
+      (a): Either<LeftType<T[number]>, EitherConstructType<T>> => curr.map(
+        (v): EitherConstructType<T> => [...(a as unknown as any[]), v] as unknown as EitherConstructType<T>)
+    ), Right([] as unknown as EitherConstructType<T>)
+  );
 };
-  
+
 export const array = all;
 
 export const applyAll = <
@@ -52,7 +52,7 @@ F extends (...args: P) => any
 };
 
 export const some = <A extends NonEmptyArray<Either<LeftType<A[number]>, EitherType<A[number]>>>> (arr: A): A[number] =>
-	arr.reduce((acc, curr) => acc.or(curr));
+  arr.reduce((acc, curr) => acc.or(curr));
 
 export const values = <A extends Array<Either<any, any>>>(arr: A): Array<EitherType<A[number]>> => {
   return arr.reduce(
@@ -66,13 +66,12 @@ export const values = <A extends Array<Either<any, any>>>(arr: A): Array<EitherT
 };
 
 export const Either = {
-	Left,
-	Right,
-	applyAll,
-	all,
-	some,
-	array,
-	record,
-	values
-  } as const;
-  
+  Left,
+  Right,
+  applyAll,
+  all,
+  some,
+  array,
+  record,
+  values
+} as const;
