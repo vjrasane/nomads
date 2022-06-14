@@ -1,5 +1,5 @@
-import * as Class from "./maybe.class";
-import { MaybeConstructType, MaybeType } from "./maybe.class";
+import * as Class from './maybe.class';
+import { MaybeConstructType, MaybeType } from './maybe.class';
 
 export type Maybe<A> = Class.Just<A> | Class.Nothing<A>;
 
@@ -88,10 +88,10 @@ export const find =
   <A, T extends readonly A[]>(f: (a: A) => boolean, arr: T): Maybe<A> => fromOptional(arr.find(f));
 
 export const some = <A extends Array<Maybe<MaybeType<A[number]>>>> (arr: A): Maybe<MaybeType<A[number]>> =>
-arr.reduce(
-  (acc, curr): Maybe<MaybeType<A[number]>> => acc.or(curr),
-  Nothing<MaybeType<A[number]>>()
-);
+  arr.reduce(
+    (acc, curr): Maybe<MaybeType<A[number]>> => acc.or(curr),
+    Nothing<MaybeType<A[number]>>()
+  );
 
 export const values = <A extends Array<Maybe<any>>>(arr: A): Array<MaybeType<A[number]>> => {
   return arr.reduce(

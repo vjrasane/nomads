@@ -38,27 +38,27 @@ abstract class AMaybe<A> implements IMaybe<A> {
 
   get base(): { tag: 'just', value: A } | { tag: 'nothing'}  {
     switch(this.self.tag) {
-      case "just":
-        return { tag: 'just', value: this.self.value };
-        default:
-          return { tag: "nothing" }
+    case 'just':
+      return { tag: 'just', value: this.self.value };
+    default:
+      return { tag: 'nothing' };
     }
   }
 
-  get = () => this.self.tag === "just" ? this.self.value : undefined;
-  getOrElse = (def: A) => this.self.tag === "just" ? this.self.value : def;
-  default = (a: A) => this.self.tag === "just" ? this.self : new Just(a);
-  or = (other: Maybe<A>) => this.self.tag === "just" ? this.self : other;
+  get = () => this.self.tag === 'just' ? this.self.value : undefined;
+  getOrElse = (def: A) => this.self.tag === 'just' ? this.self.value : def;
+  default = (a: A) => this.self.tag === 'just' ? this.self : new Just(a);
+  or = (other: Maybe<A>) => this.self.tag === 'just' ? this.self : other;
   orElse = (other: Maybe<A>) => other.or(this.self);
   filter = (f: (a: A) => boolean): Maybe<A> => this.chain(
     (a: A) => f(a) ? this.self : new Nothing()
-  )
-  fold = <B>(f: Fold<A, B>) => this.self.tag === "just" ? f.just(this.self.value) : f.nothing();
-  map = <B>(fab: (a: A) => B): Maybe<B> => this.self.tag === "just" 
+  );
+  fold = <B>(f: Fold<A, B>) => this.self.tag === 'just' ? f.just(this.self.value) : f.nothing();
+  map = <B>(fab: (a: A) => B): Maybe<B> => this.self.tag === 'just' 
     ? new Just(fab(this.self.value)) 
     : new Nothing();
-  chain = <B>(fab: (a: A) => Maybe<B>): Maybe<B> => this.self.tag === "just" 
-  ? fab(this.self.value) : new Nothing();
+  chain = <B>(fab: (a: A) => Maybe<B>): Maybe<B> => this.self.tag === 'just' 
+    ? fab(this.self.value) : new Nothing();
   apply = (ma: Maybe<FunctionInputType<A>>): Maybe<FunctionOutputType<A>> =>
     this.chain((f) => ma.map((a) => typeof f === 'function'
       ? curry(f as unknown as (...args: any[]) => any)(a)
@@ -69,15 +69,15 @@ abstract class AMaybe<A> implements IMaybe<A> {
           ? m as unknown as A extends Maybe<infer T> ? Maybe<T> : never
           : new Just(m) as unknown as A extends Maybe<infer T> ? Maybe<T> : never
       ) as A extends Maybe<infer T> ? Maybe<T> : never;
-  toResult = <E>(err: E): Result<E, A> => this.self.tag === "just" ? Ok(this.self.value) : Err(err);
+  toResult = <E>(err: E): Result<E, A> => this.self.tag === 'just' ? Ok(this.self.value) : Err(err);
   concatTo = <T>(arr: Array<A | T>): Array<A | T> => this.map((v) => [v, ...arr]).getOrElse(arr);
   appendTo = <T>(arr: Array<A | T>): Array<A | T> => this.map((v) => [...arr, v]).getOrElse(arr);
   toString = () => {
     switch(this.self.tag) {
-      case "just":
-        return `Just(${this.self.value})`;
-      default:
-        return "Nothing";
+    case 'just':
+      return `Just(${this.self.value})`;
+    default:
+      return 'Nothing';
     }
   };
 }
@@ -92,7 +92,7 @@ export class Just<A> extends AMaybe<A> {
 }
 
 export class Nothing<A> extends AMaybe<A> {
-  readonly tag = "nothing";
+  readonly tag = 'nothing';
 
   protected self = this;
 }

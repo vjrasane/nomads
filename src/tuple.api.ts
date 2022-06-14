@@ -1,5 +1,4 @@
-import { Result } from "../result";
-import * as Class from "./tuple.class";
+import * as Class from './tuple.class';
 
 export type Fold<E, A, B> = (first: E, second: A) => B
 export type Tuple<E, A> = Class.Tuple<E, A>;
