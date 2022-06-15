@@ -1,13 +1,11 @@
 # nomads
 
-[![][ci badge]][ci] [![][coverage badge]][coveralls] [![][npm badge]][npm] [![][size badge]][size] [![][license badge]][license]
+[![][ci badge]][ci] [![][coverage badge]][coveralls] [![][npm badge]][npm] [![][license badge]][license]
 
 Not really monads
 
 [npm badge]: https://img.shields.io/npm/v/nomads?color=red&style=flat-square
 [npm]: https://www.npmjs.com/package/nomads
-[size badge]: https://flat.badgen.net/packagephobia/install/nomads@latest
-[size]: https://packagephobia.now.sh/result?p=nomads%40latest
 [ci badge]: https://img.shields.io/github/workflow/status/vjrasane/nomads/CI?style=flat-square
 [ci]: https://github.com/vjrasane/nomads/actions?query=workflow%3ACI
 [coverage badge]: https://img.shields.io/coveralls/github/vjrasane/nomads?style=flat-square
