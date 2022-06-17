@@ -1,4 +1,5 @@
-import Task from '../task';
+import Result from '../result';
+import Task from '../task-result';
 
 jest.useFakeTimers();
 
@@ -141,6 +142,47 @@ describe('Task', () => {
       const result = await Task.reject('error')
         .map((n) => n * 2)
         .fork();
+      expect(result.getError().get()).toBe('error');
+    });
+  });
+
+  describe('mapError', () => {
+    it('maps resolving promise error', async () => {
+      const result: Result<string, number>  = await
+      Task.resolve<number, number>(42)
+        .mapError((n) => String(n))
+        .fork();
+      expect(result.get()).toBe(42);
+    });
+
+    it('maps rejecting promise error', async () => {
+      const result: Result<string, number>  = await
+      Task.reject<number, number>(42)
+        .mapError((n) => String(n))
+        .fork();
+      expect(result.get()).toBe(undefined);
+      expect(result.getError().get()).toBe('42');
+    });
+
+    it('maps resolving promise error before chaining with rejecting promise', async () => {
+      const result: Result<string, number>  = await
+      Task.resolve<number, number>(42)
+        .mapError((n) => String(n))
+        .chain(() => Task.reject<string, number>('error'))
+        .fork();
+      expect(result.get()).toBe(undefined);
+      expect(result.getError().get()).toBe('error');
+    });
+
+    it('cannot pass task with unknown error type to chain after mapping', async () => {
+      /* @ts-expect-error testing */
+      const result: Result<string, number>  = await
+      Task.resolve<number, number>(42)
+        .mapError((n) => String(n))
+        /* @ts-expect-error testing */
+        .chain(() => Task(() => Promise.reject('error')))
+        .fork();
+      expect(result.get()).toBe(undefined);
       expect(result.getError().get()).toBe('error');
     });
   });

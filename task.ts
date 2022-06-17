@@ -12,9 +12,13 @@ interface ITask<E, A> {
   map: <B>(fab: (a: A) => B) => Task<E, B>,
   mapError: <F>(fef: (e: E) => F) => Task<F, A>,
   chain: <B>(fab: (a: A) => Task<E, B>) => Task<E, B>,
+  then: <B>(fab: (a: A) => Promise<B>) => Task<unknown, B>,
   join: () => A extends Task<E, infer T> ? Task<E, T> : never,
   apply: (t: Task<E, FunctionInputType<A>>) => Task<E, FunctionOutputType<A>>
 }
+
+const encase = <T>(promise: Promise<T>):  Promise<Result<unknown, T>> => promise.then(Ok).catch(Err);
+
 namespace Instance {
 export class Task<E, A> implements ITask<E, A> {
   readonly tag = 'task';
@@ -38,8 +42,14 @@ export class Task<E, A> implements ITask<E, A> {
   chain = <B>(fab: (a: A) => Task<E, B>): Task<E, B> =>
     new Task(async (): Promise<Result<E, B>> =>
       this.fork().then(r => r.fold<Result<E, B> | Promise<Result<E, B>>>({
-        ok: (v) => fab(v).fork(),
+        ok: (a) => fab(a).fork(),
         err: (e) => Err(e)
+      })));
+  then = <B>(fab: (a: A) => Promise<B>): Task<unknown, B> =>    
+    new Task(async (): Promise<Result<unknown, B>> =>
+      this.fork().then(r => r.fold<Result<unknown, B> | Promise<Result<unknown, B>>>({
+        ok: (a) => encase(fab(a)),
+        err: (e) => Err<unknown, B>(e)
       })));
   join = (): A extends Task<E, infer T> ? Task<E, T> : never => {
     return this.chain(
@@ -56,9 +66,7 @@ this.chain((f) => ra.map((a) => typeof f === 'function'
 
 export type Task<E, A> = Instance.Task<E, A>;
 
-export const Task = <A, E = any>(executor: () => Promise<A>): Task<E, A> => new Instance.Task<E, A>(
-  () => executor().then(Ok).catch(Err)
-);
+export const Task = <A>(executor: () => Promise<A>): Task<unknown, A> => new Instance.Task<unknown, A>(() => encase(executor()));
 
 const mapValues = <K extends symbol | string | number, R extends Record<K, unknown>, B>(
   mapper: (value: R[keyof R]) => B,
