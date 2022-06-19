@@ -1,72 +1,59 @@
-import Result, { Err, Ok } from './result';
 import { curry, FunctionInputType, FunctionOutputType } from './src/utils';
 
-type TaskType<T> = T extends Task<any, infer A> ? A : never;
+type TaskType<R> = R extends Task<infer T> ? T : never;
 
-type ErrorType<T> = T extends Task<infer E, any> ? E : never;
+type TaskRecordTypes<T> = T extends Record<string | symbol | number, Task<any>> ? { -readonly [P in keyof T]: TaskType<T[P]> } : never;
 
-type TaskConstructType<A extends readonly Task<any, any>[] | Record<string | symbol | number, Task<any, any>>> =  { -readonly [P in keyof A]: TaskType<A[P]> };
+type TaskArrayTypes<T extends readonly Task<any>[]> = { -readonly [P in keyof T]: TaskType<T[P]> };
 
-interface ITask<E, A> {
-  fork: () => Promise<Result<E, A>>,
-  map: <B>(fab: (a: A) => B) => Task<E, B>,
-  mapError: <F>(fef: (e: E) => F) => Task<F, A>,
-  chain: <B>(fab: (a: A) => Task<E, B>) => Task<E, B>,
-  then: <B>(fab: (a: A) => Promise<B>) => Task<unknown, B>,
-  join: () => A extends Task<E, infer T> ? Task<E, T> : never,
-  apply: (t: Task<E, FunctionInputType<A>>) => Task<E, FunctionOutputType<A>>
+interface ITask<A> {
+  fork: () => Promise<A>,
+  map: <B>(fab: (a: A) => B) => Task<B>,
+  chain: <B>(fab: (a: A) => Task<B>) => Task<B>,
+  then: <B>(fab: (a: A) => Promise<B>) => Task<B>,
+  join: () => A extends Task<infer T> ? Task<T> : never,
+  apply: (t: Task<FunctionInputType<A>>) => Task<FunctionOutputType<A>>
 }
 
-const encase = <T>(promise: Promise<T>):  Promise<Result<unknown, T>> => promise.then(Ok).catch(Err);
-
 namespace Instance {
-export class Task<E, A> implements ITask<E, A> {
+export class Task<A> implements ITask<A> {
   readonly tag = 'task';
 
-  constructor(private readonly executor: () => Promise<Result<E, A>>) {}
+  constructor(private readonly executor: () => Promise<A>) {}
 
-  static reject = <E, A = any>(err: E): Task<E, A> => new Task(() => Promise.resolve(Result.Err(err)));
-  static resolve = <A, E = any>(value: A): Task<E, A> => new Task(() => Promise.resolve(Result.Ok(value)));
-  static sleep = (ms: number): Task<any, undefined> => new Task(
-    () => new Promise(resolve => setTimeout(
-      () => resolve(Result.Ok(undefined)), ms))
+  static resolve = <A>(value: A): Task<A> => new Task(() => Promise.resolve(value));
+  static sleep = (ms: number): Task<undefined> => new Task(
+    () => new Promise(resolve => setTimeout(resolve, ms))
   );
 
   fork = () => this.executor();
-  map = <B>(fab: (a: A) => B): Task<E, B> => new Task((): Promise<Result<E, B>> => this.fork().then(
-    (r: Result<E, A>): Result<E, B> => r.map(fab))
+  map = <B>(fab: (a: A) => B): Task<B> => new Task((): Promise<B> => this.fork().then(
+    (a: A): B => fab(a))
   );
-  mapError = <F>(fef: (e: E) => F): Task<F, A> => new Task((): Promise<Result<F, A>> => this.fork().then(
-    (r: Result<E, A>): Result<F, A> => r.mapError(fef))
-  );
-  chain = <B>(fab: (a: A) => Task<E, B>): Task<E, B> =>
-    new Task(async (): Promise<Result<E, B>> =>
-      this.fork().then(r => r.fold<Result<E, B> | Promise<Result<E, B>>>({
-        ok: (a) => fab(a).fork(),
-        err: (e) => Err(e)
-      })));
-  then = <B>(fab: (a: A) => Promise<B>): Task<unknown, B> =>    
-    new Task(async (): Promise<Result<unknown, B>> =>
-      this.fork().then(r => r.fold<Result<unknown, B> | Promise<Result<unknown, B>>>({
-        ok: (a) => encase(fab(a)),
-        err: (e) => Err<unknown, B>(e)
-      })));
-  join = (): A extends Task<E, infer T> ? Task<E, T> : never => {
+  chain = <B>(fab: (a: A) => Task<B>): Task<B> =>
+    new Task(async (): Promise<B> =>
+      this.fork().then(a => fab(a).fork())
+    );
+  then = <B>(fab: (a: A) => Promise<B>): Task<B> => 
+    new Task(async (): Promise<B> => 
+      this.fork().then(a => fab(a))
+    );
+  join = (): A extends Task<infer T> ? Task<T> : never => {
     return this.chain(
       t => t instanceof Task
-        ? t as unknown as A extends Task<E, infer T> ? Task<E, T> : never
-        : Task.resolve(t) as unknown as A extends Task<E, infer T> ? Task<E, T> : never
-    ) as A extends Task<E, infer T> ? Task<E, T> : never;
+        ? t as unknown as A extends Task<infer T> ? Task<T> : never
+        : Task.resolve(t) as unknown as A extends Task<infer T> ? Task<T> : never
+    ) as A extends Task<infer T> ? Task<T> : never;
   };
-  apply = (ra: Task<E, FunctionInputType<A>>): Task<E, FunctionOutputType<A>> =>
+  apply = (ra: Task<FunctionInputType<A>>): Task<FunctionOutputType<A>> =>
 this.chain((f) => ra.map((a) => typeof f === 'function'
   ? curry(f as unknown as (...args: any[]) => any)(a)
-  : a)) as Task<E, FunctionOutputType<A>>;
+  : a)) as Task<FunctionOutputType<A>>;
 }}
 
-export type Task<E, A> = Instance.Task<E, A>;
+export type Task<A> = Instance.Task<A>;
 
-export const Task = <A>(executor: () => Promise<A>): Task<unknown, A> => new Instance.Task<unknown, A>(() => encase(executor()));
+export const Task = <A>(executor: () => Promise<A>): Task<A> => new Instance.Task<A>(executor);
 
 const mapValues = <K extends symbol | string | number, R extends Record<K, unknown>, B>(
   mapper: (value: R[keyof R]) => B,
@@ -85,27 +72,27 @@ const promiseRecord = <R extends Record<string | number | symbol, Promise<any>>>
       }), {}
     ) as { [P in keyof R]: Awaited<R[P]> });
 
-export const applyAll = <A extends readonly Task<any, any>[] | [], P extends any[] & TaskConstructType<A>, F extends (...args: P) => any>(f: F, args: A): Task<ErrorType<A[keyof A]>, ReturnType<F>> => {
-  return all(args).map((args) => f(...args as Parameters<F>)) as Task<ErrorType<A[keyof A]>, ReturnType<F>>;
+export const applyAll = <A extends readonly Task<any>[] | [], P extends any[] & TaskRecordTypes<A>, F extends (...args: P) => any>(f: F, args: A): Task<ReturnType<F>> => {
+  return all(args).map((args) => f(...args as Parameters<F>)) as Task<ReturnType<F>>;
 };
 
-export const all =  <T extends readonly Task<any, any>[] | []>(arr: T): Task<ErrorType<T[keyof T]>, TaskConstructType<T>> =>
+export const all =  <T extends readonly Task<any>[] | []>(arr: T): Task<TaskArrayTypes<T>> =>
   new Instance.Task(
-    () =>  Promise.all(arr.map((t: Task<any, any>) => t.fork()))
-      .then(Result.all) as Promise<Result<ErrorType<T[keyof T]>, TaskConstructType<T>>>
+    () =>  Promise.all(
+      arr.map((t: Task<T[number]>) => t.fork())
+    ) as unknown as Promise<TaskArrayTypes<T>>
   );
 
 export const array = all;
 
-export const record = <R extends Record<string | number | symbol, Task<any, any>>>(record: R): Task<ErrorType<R[keyof R]>, TaskConstructType<R>> =>
+export const record = <R extends Record<string | number | symbol, Task<any>>>(record: R): Task<TaskRecordTypes<R>> =>
   new Instance.Task(
     () => promiseRecord(
       mapValues((value) => value.fork(), record)
-    ).then(Result.record) as Promise<Result<ErrorType<R[keyof R]>, TaskConstructType<R>>>
+    ) as Promise<TaskRecordTypes<R>>
   );
 
 Task.resolve = Instance.Task.resolve;
-Task.reject = Instance.Task.reject;
 Task.sleep = Instance.Task.sleep;
 Task.all = all;
 Task.array = array;
