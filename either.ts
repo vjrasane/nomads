@@ -120,8 +120,8 @@ type Fold<E, A, B> = {
 
 export type Either<E, A> = Instance.Right<E, A> | Instance.Left<E, A>;
 
-export const Right = <A, E = any>(value: A): Either<E, A> => new Instance.Right(value);
-export const Left = <E, A = any>(value: E): Either<E, A> => new Instance.Left(value);
+export const Right = <A>(value: A): Either<any, A> => new Instance.Right(value);
+export const Left = <E>(value: E): Either<E, any> => new Instance.Left(value);
 
 export const record = <R extends Record<string | number | symbol, Either<any, any>>>(
   record: R

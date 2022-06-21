@@ -10,7 +10,7 @@ interface ITask<A> {
   fork: () => Promise<A>,
   map: <B>(fab: (a: A) => B) => Task<B>,
   chain: <B>(fab: (a: A) => Task<B>) => Task<B>,
-  then: <B>(fab: (a: A) => Promise<B>) => Task<B>,
+  chainPromise: <B>(fab: (a: A) => Promise<B>) => Task<B>,
   join: () => A extends Task<infer T> ? Task<T> : never,
   apply: (t: Task<FunctionInputType<A>>) => Task<FunctionOutputType<A>>
 }
@@ -21,28 +21,23 @@ export class Task<A> implements ITask<A> {
 
   constructor(private readonly executor: () => Promise<A>) {}
 
-  static resolve = <A>(value: A): Task<A> => new Task(() => Promise.resolve(value));
-  static sleep = (ms: number): Task<undefined> => new Task(
-    () => new Promise(resolve => setTimeout(resolve, ms))
-  );
-
   fork = () => this.executor();
   map = <B>(fab: (a: A) => B): Task<B> => new Task((): Promise<B> => this.fork().then(
     (a: A): B => fab(a))
   );
   chain = <B>(fab: (a: A) => Task<B>): Task<B> =>
     new Task(async (): Promise<B> =>
-      this.fork().then(a => fab(a).fork())
+      this.fork().then((a: A): Promise<B> => fab(a).fork())
     );
-  then = <B>(fab: (a: A) => Promise<B>): Task<B> => 
+  chainPromise = <B>(fab: (a: A) => Promise<B>): Task<B> => 
     new Task(async (): Promise<B> => 
-      this.fork().then(a => fab(a))
+      this.fork().then((a: A): Promise<B> => fab(a))
     );
   join = (): A extends Task<infer T> ? Task<T> : never => {
     return this.chain(
       t => t instanceof Task
         ? t as unknown as A extends Task<infer T> ? Task<T> : never
-        : Task.resolve(t) as unknown as A extends Task<infer T> ? Task<T> : never
+        : resolve(t) as unknown as A extends Task<infer T> ? Task<T> : never
     ) as A extends Task<infer T> ? Task<T> : never;
   };
   apply = (ra: Task<FunctionInputType<A>>): Task<FunctionOutputType<A>> =>
@@ -92,8 +87,15 @@ export const record = <R extends Record<string | number | symbol, Task<any>>>(re
     ) as Promise<TaskRecordTypes<R>>
   );
 
-Task.resolve = Instance.Task.resolve;
-Task.sleep = Instance.Task.sleep;
+export const resolve = <A>(value: A): Task<A> => Task(() => Promise.resolve(value));
+export const sleep = (ms: number): Task<undefined> => Task(
+  () => new Promise(resolve => setTimeout(() => resolve(undefined), ms))
+);
+export const none: Task<unknown> = resolve(undefined);
+
+Task.resolve = resolve;
+Task.sleep = sleep;
+Task.none = none;
 Task.all = all;
 Task.array = array;
 Task.record = record;

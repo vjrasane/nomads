@@ -291,7 +291,7 @@ describe('Either', () => {
     });
 
     it('right function applies to left', () => {
-      const applied = Right((str: string) => parseInt(str, 10)).apply(Left<string, string>('error'));
+      const applied = Right((str: string) => parseInt(str, 10)).apply(Left<string>('error'));
       expect(applied.base).toEqual({ tag: 'left', value: 'error' });
     });
 

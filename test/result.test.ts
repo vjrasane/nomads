@@ -105,7 +105,7 @@ describe('Result', () => {
     });
 
     it('maps err value', () => {
-      const mapped = Err<string, number>('error').map((num) => num * 2);
+      const mapped = Err<string>('error').map((num) => num * 2);
       expect(mapped.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
@@ -129,7 +129,7 @@ describe('Result', () => {
     });
 
     it('chains err value', () => {
-      const chained = Err<string, number>('error').chain((num) => Ok(num * 2));
+      const chained = Err<string>('error').chain((num) => Ok(num * 2));
       expect(chained.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
@@ -168,7 +168,7 @@ describe('Result', () => {
     });
 
     it('err orElse ok returns ok', () => {
-      const or = Err<string, number>('error').orElse(Ok(42));
+      const or = Err<string>('error').orElse(Ok(42));
       expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
@@ -235,8 +235,8 @@ describe('Result', () => {
     });
 
     it('gets value from null ok', () => {
-      expect(Ok<any, number | null>(null).getOrElse(0)).toBe(null);
-      expect(Ok<any, number | undefined>(undefined).getOrElse(0)).toBe(undefined);
+      expect(Ok<number | null>(null).getOrElse(0)).toBe(null);
+      expect(Ok<number | undefined>(undefined).getOrElse(0)).toBe(undefined);
     });
   });
 
@@ -281,7 +281,7 @@ describe('Result', () => {
     });
 
     it('ok function applies to err', () => {
-      const applied = Ok((str: string) => parseInt(str, 10)).apply(Err<string, string>('error'));
+      const applied = Ok((str: string) => parseInt(str, 10)).apply(Err('error'));
       expect(applied.base).toEqual({ tag: 'err', error: 'error' });
     });
 

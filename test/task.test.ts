@@ -408,4 +408,42 @@ describe('Task', () => {
       await expect(process).rejects.toBe('error');
     });
   });
+
+  describe('none', () => {
+    it('resolves with nothing', async () => {
+      const promise = Task.none.fork();
+      const result = await promise;
+      expect(result).toBe(undefined);
+    });
+  });
+
+  describe('chainPromise', () => {
+    it('chains resolving promise', async () => {
+      const result = await Task.resolve(42)
+        .chainPromise((n) => Promise.resolve(n * 2))
+        .fork();
+      expect(result).toBe(84);
+    });
+
+    it('chains rejecting promise with resolving promise', async () => {
+      const process = Task(() => Promise.reject('error'))
+        .chainPromise((n) => Promise.resolve(n * 2))
+        .fork();
+      await expect(process).rejects.toBe('error');
+    });
+
+    it('chains rejecting promise with rejecting promise', async () => {
+      const process = Task(() => Promise.reject('first'))
+        .chainPromise(() => Promise.reject('second'))
+        .fork();
+      await expect(process).rejects.toBe('first');
+    });
+
+    it('chains resolving promise with rejecting promise', async () => {
+      const process = Task.resolve(42)
+        .chainPromise(() => Promise.reject('error'))
+        .fork();
+      await expect(process).rejects.toBe('error');
+    });
+  });
 });
