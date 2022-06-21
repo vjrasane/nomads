@@ -121,7 +121,7 @@ err: (e: E) => B
 export type Result<E, A> = Instance.Ok<E, A> | Instance.Err<E, A>;
 
 export const Ok = <E = any, A = unknown>(value: A): Result<E, A> => new Instance.Ok(value);
-export const Err = <E = unknown, A = unknown>(error: E): Result<E, A> => new Instance.Err(error);
+export const Err = <E = unknown, A = any>(error: E): Result<E, A> => new Instance.Err(error);
 
 export const record = <R extends Record<string | number | symbol, Result<any, any>>>(
   record: R

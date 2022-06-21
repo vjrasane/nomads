@@ -178,9 +178,9 @@ type Fold<E, A, B> = {
 export type RemoteData<E, A> = Instance.NotAsked<E, A> | Instance.Loading<E, A> | Instance.Success<E, A> | Instance.Failure<E, A>;
 
 export const Success = <E = any, A = unknown>(value: A): RemoteData<E, A> => new Instance.Success(value);
-export const Failure = <E = unknown, A = unknown>(error: E): RemoteData<E, A> => new Instance.Failure(error);
-export const Loading = <E = unknown, A = unknown>(): RemoteData<E, A> => new Instance.Loading();
-export const NotAsked = <E = unknown, A = unknown>(): RemoteData<E, A> => new Instance.NotAsked();
+export const Failure = <E = unknown, A = any>(error: E): RemoteData<E, A> => new Instance.Failure(error);
+export const Loading = <E = any, A = any>(): RemoteData<E, A> => new Instance.Loading();
+export const NotAsked = <E = any, A = any>(): RemoteData<E, A> => new Instance.NotAsked();
 
 export const record = <R extends Record<string | number | symbol, RemoteData<any, any>>>(
   record: R

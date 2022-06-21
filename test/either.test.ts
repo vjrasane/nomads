@@ -250,9 +250,8 @@ describe('Either', () => {
       expect(joined.base).toEqual({ tag: 'left', value: 'str' });
     });
 
-    it('cannot join nested right value', () => {
+    it('joins nested right value', () => {
       const joined = Left(Right(42)).join();
-      /* @ts-expect-error testing */
       expect(joined.getLeft().get()?.base).toEqual({ tag: 'right', value: 42 });
     });
 
