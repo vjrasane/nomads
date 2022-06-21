@@ -98,7 +98,7 @@ type Fold<A, B> = {
 
 export type Maybe<A> = Instance.Just<A> | Instance.Nothing<A>;
 
-export const Just = <A = unknown>(value: A): Maybe<A> => new Instance.Just(value);
+export const Just = <A>(value: A): Maybe<A> => new Instance.Just(value);
 export const Nothing = <A = any>(): Maybe<A> => new Instance.Nothing<A>();
 
 export const record = <R extends Record<string | number | symbol, Maybe<any>>>(
@@ -180,7 +180,7 @@ export const first = <A>(arr: Array<A>): Maybe<A> => nth(0, arr);
 export const last = <A>(arr: Array<A>): Maybe<A> => nth(arr.length - 1, arr);
 
 export const find =
-<A, T extends readonly A[]>(f: (a: A) => boolean, arr: T): Maybe<A> => fromOptional(arr.find(f));
+<A>(f: (a: A) => boolean, arr: Array<A>): Maybe<A> => fromOptional(arr.find(f));
 
 export const some = <A extends Array<Maybe<MaybeType<A[number]>>>> (arr: A): Maybe<MaybeType<A[number]>> =>
   arr.reduce(
