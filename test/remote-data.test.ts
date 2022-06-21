@@ -124,17 +124,17 @@ describe('RemoteData', () => {
     });
 
     it('maps failure value', () => {
-      const mapped = Failure('error').map((num) => num * 2);
+      const mapped = Failure<string, number>('error').map((num) => num * 2);
       expect(mapped.base).toEqual({ tag: 'failure', error: 'error' });
     });
 
     it('maps loading value', () => {
-      const mapped = Loading().map((num) => num * 2);
+      const mapped = Loading<string, number>().map((num) => num * 2);
       expect(mapped.base).toEqual({ tag: 'loading' });
     });
 
     it('maps not asked value', () => {
-      const mapped = NotAsked().map((num) => num * 2);
+      const mapped = NotAsked<string, number>().map((num) => num * 2);
       expect(mapped.base).toEqual({ tag: 'not asked' });
     });
   });
@@ -151,12 +151,12 @@ describe('RemoteData', () => {
     });
 
     it('maps loading value', () => {
-      const mapped = Loading().mapError((str) => str.toUpperCase());
+      const mapped = Loading<string, number>().mapError((str) => str.toUpperCase());
       expect(mapped.base).toEqual({ tag: 'loading' });
     });
 
     it('maps not asked value', () => {
-      const mapped = NotAsked().mapError((str) => str.toUpperCase());
+      const mapped = NotAsked<string, number>().mapError((str) => str.toUpperCase());
       expect(mapped.base).toEqual({ tag: 'not asked' });
     });
   });
@@ -168,17 +168,17 @@ describe('RemoteData', () => {
     });
 
     it('chains failure value', () => {
-      const mapped = Failure('error').chain((num) => Success(num * 2));
+      const mapped = Failure<string, number>('error').chain((num) => Success(num * 2));
       expect(mapped.base).toEqual({ tag: 'failure', error: 'error' });
     });
 
     it('chains loading value', () => {
-      const mapped = Loading().chain((num) => Success(num * 2));
+      const mapped = Loading<string, number>().chain((num) => Success(num * 2));
       expect(mapped.base).toEqual({ tag: 'loading' });
     });
 
     it('chains not asked value', () => {
-      const mapped = NotAsked().chain((num) => Success(num * 2));
+      const mapped = NotAsked<string, number>().chain((num) => Success(num * 2));
       expect(mapped.base).toEqual({ tag: 'not asked' });
     });
   });
@@ -196,7 +196,7 @@ describe('RemoteData', () => {
     });
 
     it('failure or success returns success', () => {
-      const or = Failure('error').or(Success(42));
+      const or = Failure<string, number>('error').or(Success(42));
       expect(or.base).toEqual({ tag: 'success', value: 42 });
     });
 
@@ -223,7 +223,7 @@ describe('RemoteData', () => {
     });
 
     it('failure or success returns success', () => {
-      const or = Failure('error').orElse(Success(42));
+      const or = Failure<string, number>('error').orElse(Success(42));
       expect(or.base).toEqual({ tag: 'success', value: 42 });
     });
 
@@ -288,7 +288,7 @@ describe('RemoteData', () => {
     });
 
     it('folds loading value', () => {
-      const folded = Loading().fold({
+      const folded = Loading<string, number>().fold({
         failure: (err) => err.toUpperCase(),
         loading: () => 'loading',
         notAsked: () => 'str',
@@ -298,7 +298,7 @@ describe('RemoteData', () => {
     });
 
     it('folds not asked value', () => {
-      let folded = NotAsked().fold({
+      let folded = NotAsked<string, number>().fold({
         failure: (err) => err.toUpperCase(),
         loading: () => 'str',
         'not asked': () => 'not asked',
@@ -306,7 +306,7 @@ describe('RemoteData', () => {
       });
       expect(folded).toBe('not asked');
 
-      folded = NotAsked().fold({
+      folded = NotAsked<string, number>().fold({
         failure: (err) => err.toUpperCase(),
         loading: () => 'str',
         notAsked: () => 'notAsked',
@@ -498,7 +498,7 @@ describe('RemoteData', () => {
     });
 
     it('joins nested failure value', () => {
-      const joined = Failure('error').join();
+      const joined = Failure<string, RemoteData<string, number>>('error').join();
       expect(joined.base).toEqual({ tag: 'failure', error: 'error'  });
     });
 
@@ -740,7 +740,7 @@ describe('RemoteData', () => {
 
     it('gets success from array with single success', () => {
       expect(
-        RemoteData.some([Failure('first'), Success(2), Loading(), NotAsked()]).base
+        RemoteData.some([Failure<string, number>('first'), Success(2), Loading<string, number>(), NotAsked<string, number>()]).base
       ).toEqual({ tag: 'success', value: 2 });
     });
 

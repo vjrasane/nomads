@@ -33,7 +33,7 @@ describe('Either', () => {
 
   describe('mapRight', () => {
     it('maps left', () => {
-      expect(Left(42).map(n => n * 2).base).toEqual({ tag: 'left', value: 42 });
+      expect(Left<string, number>('str').map(n => n * 2).base).toEqual({ tag: 'left', value: 'str' });
     });
 
     it('maps right', () => {
@@ -246,12 +246,13 @@ describe('Either', () => {
     });
 
     it('joins left value', () => {
-      const joined = Left(42).join();
-      expect(joined.base).toEqual({ tag: 'left', value: 42 });
+      const joined = Left<string, Either<string, number>>('str').join();
+      expect(joined.base).toEqual({ tag: 'left', value: 'str' });
     });
 
-    it('joins nested right value', () => {
+    it('cannot join nested right value', () => {
       const joined = Left(Right(42)).join();
+      /* @ts-expect-error testing */
       expect(joined.getLeft().get()?.base).toEqual({ tag: 'right', value: 42 });
     });
 
@@ -291,7 +292,7 @@ describe('Either', () => {
     });
 
     it('right function applies to left', () => {
-      const applied = Right((str: string) => parseInt(str, 10)).apply(Left<string>('error'));
+      const applied = Right((str: string) => parseInt(str, 10)).apply(Left<string, string>('error'));
       expect(applied.base).toEqual({ tag: 'left', value: 'error' });
     });
 
@@ -349,7 +350,7 @@ describe('Either', () => {
 
     it('gets right from array with single right', () => {
       expect(
-        Either.some([Left('first'), Right(2), Left('third')]).base
+        Either.some([Left<string, number>('first'), Right(2), Left<string, number>('third')]).base
       ).toEqual({ tag: 'right', value: 2 });
     });
 
@@ -410,7 +411,7 @@ describe('Either', () => {
     });
 
     it('left or right returns right', () => {
-      const or = Left('error').or(Right(42));
+      const or = Left<string, number>('error').or(Right(42));
       expect(or.base).toEqual({ tag: 'right', value: 42 });
     });
 
@@ -432,7 +433,7 @@ describe('Either', () => {
     });
 
     it('left orElse right returns right', () => {
-      const or = Left('error').orElse(Right(42));
+      const or = Left<string, number>('error').orElse(Right(42));
       expect(or.base).toEqual({ tag: 'right', value: 42 });
     });
 

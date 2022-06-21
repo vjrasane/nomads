@@ -81,7 +81,7 @@ this.chain(
 ) as A extends Result<E, infer T> ? Result<E, T> : never;
 fold = <B>(f: Fold<E, A, B>) => this.self.tag === 'ok' ? f.ok(this.self.value) : f.err(this.self.error);
 toMaybe = () => this.getValue();
-toEither = () => this.self.tag === 'ok' ? Right(this.self.value) : Left(this.self.error);
+toEither = () => this.self.tag === 'ok' ? Right<E, A>(this.self.value) : Left<E, A>(this.self.error);
 getValue = () => this.self.tag === 'ok' ? Just(this.self.value) : Nothing<A>();
 getError = () => this.self.tag === 'ok' ? Nothing<E>() : Just(this.self.error);
 toString = () => {
@@ -120,8 +120,8 @@ err: (e: E) => B
 
 export type Result<E, A> = Instance.Ok<E, A> | Instance.Err<E, A>;
 
-export const Ok = <A>(value: A): Result<any, A> => new Instance.Ok(value);
-export const Err = <E>(error: E): Result<E, any> => new Instance.Err(error);
+export const Ok = <E = any, A = unknown>(value: A): Result<E, A> => new Instance.Ok(value);
+export const Err = <E = unknown, A = unknown>(error: E): Result<E, A> => new Instance.Err(error);
 
 export const record = <R extends Record<string | number | symbol, Result<any, any>>>(
   record: R

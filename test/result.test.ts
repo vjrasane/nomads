@@ -105,7 +105,7 @@ describe('Result', () => {
     });
 
     it('maps err value', () => {
-      const mapped = Err<string>('error').map((num) => num * 2);
+      const mapped = Err<string, number>('error').map((num) => num * 2);
       expect(mapped.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
@@ -129,7 +129,7 @@ describe('Result', () => {
     });
 
     it('chains err value', () => {
-      const chained = Err<string>('error').chain((num) => Ok(num * 2));
+      const chained = Err<string, number>('error').chain((num) => Ok(num * 2));
       expect(chained.base).toEqual({ tag: 'err', error: 'error' });
     });
   });
@@ -146,7 +146,7 @@ describe('Result', () => {
     });
 
     it('err or ok returns ok', () => {
-      const or = Err('error').or(Ok(42));
+      const or = Err<string, number>('error').or(Ok(42));
       expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
@@ -168,7 +168,7 @@ describe('Result', () => {
     });
 
     it('err orElse ok returns ok', () => {
-      const or = Err<string>('error').orElse(Ok(42));
+      const or = Err<string, number>('error').orElse(Ok(42));
       expect(or.base).toEqual({ tag: 'ok', value: 42 });
     });
 
@@ -341,7 +341,7 @@ describe('Result', () => {
     });
 
     it('joins nested err value', () => {
-      const joined = Err('error').join();
+      const joined = Err<string, Result<string, number>>('error').join();
       expect(joined.base).toEqual({ tag: 'err', error: 'error' });
     });
 
@@ -539,7 +539,7 @@ describe('Result', () => {
 
     it('gets ok from array with single ok', () => {
       expect(
-        Result.some([Err('first'), Ok(2), Err('third')]).base
+        Result.some([Err<string, number>('first'), Ok(2), Err<string, number>('third')]).base
       ).toEqual({ tag: 'ok', value: 2 });
     });
 

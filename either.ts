@@ -81,7 +81,7 @@ namespace Instance {
     swap = () => this.self.tag === 'right' ? new Left<A, E>(this.self.value) : new Right<A, E>(this.self.value);
     fold = <B>(f: Fold<E, A, B>) => this.self.tag === 'right' ? f.right(this.self.value) : f.left(this.self.value);
     toMaybe = () => this.getRight();
-    toResult = () => this.self.tag === 'right' ? Ok(this.self.value) : Err(this.self.value);
+    toResult = () => this.self.tag === 'right' ? Ok<E, A>(this.self.value) : Err<E, A>(this.self.value);
     toTuple = () => Tuple(this.getLeft(), this.getRight());
     getRight = () => this.self.tag === 'right' ? Just(this.self.value) : Nothing<A>();
     getLeft = () => this.self.tag === 'right' ? Nothing<E>() : Just(this.self.value);
@@ -120,8 +120,8 @@ type Fold<E, A, B> = {
 
 export type Either<E, A> = Instance.Right<E, A> | Instance.Left<E, A>;
 
-export const Right = <A>(value: A): Either<any, A> => new Instance.Right(value);
-export const Left = <E>(value: E): Either<E, any> => new Instance.Left(value);
+export const Right = <E = any, A = unknown>(value: A): Either<E, A> => new Instance.Right(value);
+export const Left = <E = unknown, A = unknown>(value: E): Either<E, A> => new Instance.Left(value);
 
 export const record = <R extends Record<string | number | symbol, Either<any, any>>>(
   record: R

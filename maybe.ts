@@ -98,7 +98,7 @@ type Fold<A, B> = {
 
 export type Maybe<A> = Instance.Just<A> | Instance.Nothing<A>;
 
-export const Just = <A>(value: A): Maybe<A> => new Instance.Just(value);
+export const Just = <A = unknown>(value: A): Maybe<A> => new Instance.Just(value);
 export const Nothing = <A = any>(): Maybe<A> => new Instance.Nothing<A>();
 
 export const record = <R extends Record<string | number | symbol, Maybe<any>>>(
